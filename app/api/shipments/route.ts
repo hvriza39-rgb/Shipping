@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
   const shipment = await prisma.shipment.create({
     data: {
       trackingNumber,
-      customerId: session.user.id,
+      customer: { connect: { id: session.user.id } },
       serviceType: serviceType ?? "STANDARD",
       weightKg,
       lengthCm,
@@ -138,7 +138,6 @@ export async function POST(req: NextRequest) {
           }
         : undefined,
 
-      // Log the first tracking event
       trackingEvents: {
         create: {
           status: "PENDING",
@@ -153,6 +152,5 @@ export async function POST(req: NextRequest) {
       trackingEvents: true,
     },
   });
-
   return NextResponse.json(shipment, { status: 201 });
     }
