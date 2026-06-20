@@ -1,0 +1,190 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── AUTH ───────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  STAFF
+  CUSTOMER
+  COURIER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  passwordHash  String
+  role          Role      @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  shipments     Shipment[] @relation("CustomerShipments")
+  deliveries    Shipment[] @relation("CourierShipments")
+  addresses     Address[]
+}
+
+// ─── ADDRESS ────────────────────────────────────────────
+
+model Address {
+  id          String   @id @default(cuid())
+  userId      String?
+  label       String?  // e.g. "Home", "Office"
+  fullName    String
+  phone       String
+  line1       String
+  line2       String?
+  city        String
+  state       String
+  zip         String
+  country     String   @default("US")
+
+  user        User?    @relation(fields: [userId], references: [id])
+
+  shipmentsAsOrigin  Shipment[] @relation("OriginAddress")
+  shipmentsAsDest    Shipment[] @relation("DestinationAddress")
+}
+
+// ─── SHIPMENT ───────────────────────────────────────────
+
+enum ShipmentStatus {
+  PENDING
+  CONFIRMED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  RETURNED
+  CANCELLED
+}
+
+enum ServiceType {
+  STANDARD
+  EXPRESS
+  OVERNIGHT
+  FREIGHT
+}
+
+model Shipment {
+  id              String          @id @default(cuid())
+  trackingNumber  String          @unique @default(cuid())
+  customerId      String
+  courierId       String?         // null until assigned
+  status          ShipmentStatus  @default(PENDING)
+  serviceType     ServiceType     @default(STANDARD)
+
+  originId        String
+  destinationId   String
+
+  // Package details
+  weightKg        Float
+  lengthCm        Float?
+  widthCm         Float?
+  heightCm        Float?
+  description     String?
+  declaredValue   Float?
+
+  // Carrier info (if third-party)
+  carrierName     String?         // e.g. "FedEx", "UPS"
+  carrierTrackingId String?       // their tracking number
+
+  // Pricing
+  quotedPrice     Float?
+  finalPrice      Float?
+
+  notes           String?
+  estimatedDelivery DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  customer        User            @relation("CustomerShipments", fields: [customerId], references: [id])
+  courier         User?           @relation("CourierShipments", fields: [courierId], references: [id])
+  origin          Address         @relation("OriginAddress", fields: [originId], references: [id])
+  destination     Address         @relation("DestinationAddress", fields: [destinationId], references: [id])
+
+  trackingEvents  TrackingEvent[]
+  parcels         Parcel[]
+  invoice         Invoice?
+}
+
+// ─── PARCEL ─────────────────────────────────────────────
+// One shipment can have multiple parcels/boxes
+
+model Parcel {
+  id          String   @id @default(cuid())
+  shipmentId  String
+  label       String?  // e.g. "Box 1 of 3"
+  weightKg    Float
+  lengthCm    Float?
+  widthCm     Float?
+  heightCm    Float?
+  contents    String?
+
+  shipment    Shipment @relation(fields: [shipmentId], references: [id])
+}
+
+// ─── TRACKING EVENTS ────────────────────────────────────
+
+model TrackingEvent {
+  id          String   @id @default(cuid())
+  shipmentId  String
+  status      ShipmentStatus
+  location    String?  // e.g. "Chicago, IL"
+  note        String?
+  createdAt   DateTime @default(now())
+
+  shipment    Shipment @relation(fields: [shipmentId], references: [id])
+}
+
+// ─── INVOICE ────────────────────────────────────────────
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  shipmentId  String        @unique
+  amount      Float
+  tax         Float         @default(0)
+  total       Float
+  status      InvoiceStatus @default(DRAFT)
+  dueDate     DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+
+  shipment    Shipment      @relation(fields: [shipmentId], references: [id])
+}
+
+// ─── NOTIFICATIONS ──────────────────────────────────────
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+}
+
+model Notification {
+  id          String              @id @default(cuid())
+  recipientId String
+  channel     NotificationChannel
+  subject     String?
+  body        String
+  sentAt      DateTime?
+  createdAt   DateTime            @default(now())
+}
