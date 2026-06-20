@@ -6,14 +6,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-const searchParams = useSearchParams();
-const registered = searchParams.get("registered");
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const registered = searchParams.get("registered");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
+
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
