@@ -1,19 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+
+function RegisteredBanner() {
+  const searchParams = useSearchParams();
+  if (!searchParams.get("registered")) return null;
+  return (
+    <div style={{ background: "#F0FDF4", color: "#15803D", border: "1px solid #BBF7D0", borderRadius: 8, padding: "10px 13px", fontSize: 13, fontWeight: 500, marginBottom: 20 }}>
+      Account created — sign in to continue.
+    </div>
+  );
+}
 
 export default function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const registered = searchParams.get("registered");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
+
+  
 
   
 
