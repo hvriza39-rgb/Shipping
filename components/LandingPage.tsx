@@ -155,7 +155,7 @@ export default function LandingPage() {
             {["Track", "Sign in"].map(l => (
               <a key={l} href="#" className="nav-link" style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 500, textDecoration: "none", padding: "7px 14px", transition: "color 0.15s" }}>{l}</a>
             ))}
-            <a href="#" className="btn-p" style={{ background: "#2563EB", color: "#fff", fontSize: 13, fontWeight: 700, textDecoration: "none", padding: "8px 18px", borderRadius: 8, marginLeft: 4, transition: "background 0.15s" }}>Get started</a>
+            <Link href="#" className="btn-p" style={{ background: "#2563EB", color: "#fff", fontSize: 13, fontWeight: 700, textDecoration: "none", padding: "8px 18px", borderRadius: 8, marginLeft: 4, transition: "background 0.15s" }}>Get started</a>
           </div>
         </nav>
 
@@ -184,10 +184,10 @@ export default function LandingPage() {
                 Book shipments in minutes, track them in real time, and get delivery confirmations the moment they happen.
               </p>
               <div className="h-cta" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <a href="#" className="btn-p" style={{ background: "#2563EB", color: "#fff", fontWeight: 700, fontSize: 14, textDecoration: "none", padding: "13px 28px", borderRadius: 10, transition: "background 0.15s", letterSpacing: "-0.01em" }}>
+                <Link href="#" className="btn-p" style={{ background: "#2563EB", color: "#fff", fontWeight: 700, fontSize: 14, textDecoration: "none", padding: "13px 28px", borderRadius: 10, transition: "background 0.15s", letterSpacing: "-0.01em" }}>
                   Start shipping →
                 </a>
-                <a href="#" className="btn-o" style={{ color: "rgba(255,255,255,0.65)", fontWeight: 600, fontSize: 13, textDecoration: "none", padding: "13px 20px", borderRadius: 10, border: "1.5px solid rgba(255,255,255,0.13)", transition: "background 0.15s" }}>
+                <Link href="#" className="btn-o" style={{ color: "rgba(255,255,255,0.65)", fontWeight: 600, fontSize: 13, textDecoration: "none", padding: "13px 20px", borderRadius: 10, border: "1.5px solid rgba(255,255,255,0.13)", transition: "background 0.15s" }}>
                   Track a package
                 </a>
               </div>
@@ -321,7 +321,7 @@ export default function LandingPage() {
               <p style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", lineHeight: 1.7, margin: "0 0 26px" }}>
                 Our courier network covers all 50 states, with same-day and overnight options across major cities.
               </p>
-              <a href="#" className="btn-p" style={{ display: "inline-block", background: "#2563EB", color: "#fff", fontWeight: 700, fontSize: 14, textDecoration: "none", padding: "12px 24px", borderRadius: 9, transition: "background 0.15s" }}>
+              <Link href="#" className="btn-p" style={{ display: "inline-block", background: "#2563EB", color: "#fff", fontWeight: 700, fontSize: 14, textDecoration: "none", padding: "12px 24px", borderRadius: 9, transition: "background 0.15s" }}>
                 Get started free
               </a>
             </div>
@@ -357,10 +357,10 @@ export default function LandingPage() {
               Create your free account and book your first shipment today. No credit card required.
             </p>
             <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              <a href="#" className="btn-w" style={{ background: "#fff", color: "#2563EB", fontWeight: 800, fontSize: 14, textDecoration: "none", padding: "13px 30px", borderRadius: 10, transition: "background 0.15s" }}>
+              <Link href="#" className="btn-w" style={{ background: "#fff", color: "#2563EB", fontWeight: 800, fontSize: 14, textDecoration: "none", padding: "13px 30px", borderRadius: 10, transition: "background 0.15s" }}>
                 Create free account
               </a>
-              <a href="#" className="btn-o" style={{ color: "rgba(255,255,255,0.7)", fontWeight: 600, fontSize: 13, textDecoration: "none", padding: "13px 20px", borderRadius: 10, border: "1.5px solid rgba(255,255,255,0.22)", transition: "background 0.15s" }}>
+              <Link href="#" className="btn-o" style={{ color: "rgba(255,255,255,0.7)", fontWeight: 600, fontSize: 13, textDecoration: "none", padding: "13px 20px", borderRadius: 10, border: "1.5px solid rgba(255,255,255,0.22)", transition: "background 0.15s" }}>
                 Sign in
               </a>
             </div>
@@ -382,7 +382,7 @@ export default function LandingPage() {
             </div>
             <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
               {["Terms", "Privacy", "Contact", "Track a Package"].map(l => (
-                <a key={l} href="#" className="foot-link" style={{ color: "rgba(255,255,255,0.3)", fontSize: 12, fontWeight: 500, textDecoration: "none", transition: "color 0.15s" }}>{l}</a>
+                <Link key={l} href="#" className="foot-link" style={{ color: "rgba(255,255,255,0.3)", fontSize: 12, fontWeight: 500, textDecoration: "none", transition: "color 0.15s" }}>{l}</a>
               ))}
             </div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.18)" }}>© 2026 SwiftShip. All rights reserved.</div>
