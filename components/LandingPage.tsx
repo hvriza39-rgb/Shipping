@@ -90,7 +90,7 @@ export default function LandingPage() {
         entries.forEach((e) => {
           const key = (e.target as HTMLElement).dataset.s;
           if (e.isIntersecting && key) {
-            setVisible((prev) => new Set([...prev, key]));
+            setVisible((prev) => { const next = new Set(prev); next.add(key); return next; });
           }
         });
       },
