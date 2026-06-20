@@ -1,14 +1,68 @@
 'use client';
 import { useState, useEffect } from "react";
 
-const COURIERS = [
+type ShipmentStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "PICKED_UP"
+  | "IN_TRANSIT"
+  | "OUT_FOR_DELIVERY"
+  | "DELIVERED"
+  | "FAILED"
+  | "RETURNED"
+  | "CANCELLED";
+
+type ServiceType = "STANDARD" | "EXPRESS" | "OVERNIGHT" | "FREIGHT";
+
+interface Courier {
+  id: string;
+  name: string;
+}
+
+interface TrackingEvent {
+  status: ShipmentStatus;
+  note: string;
+  location: string | null;
+  createdAt: string;
+}
+
+interface Customer {
+  name: string;
+  email: string;
+  phone: string;
+}
+
+interface AddressSummary {
+  city: string;
+  state: string;
+}
+
+interface Shipment {
+  id: string;
+  trackingNumber: string;
+  customer: Customer;
+  origin: AddressSummary;
+  destination: AddressSummary;
+  serviceType: ServiceType;
+  status: ShipmentStatus;
+  courierId: string | null;
+  weightKg: number;
+  description?: string;
+  declaredValue?: number;
+  createdAt: string;
+  estimatedDelivery?: string;
+  deliveredAt?: string;
+  trackingEvents: TrackingEvent[];
+}
+
+const COURIERS: Courier[] = [
   { id: "c1", name: "Marcus Reed" },
   { id: "c2", name: "Priya Nair" },
   { id: "c3", name: "Tyler Brooks" },
   { id: "c4", name: "Sandra Osei" },
 ];
 
-const STATUS_META = {
+const STATUS_META: Record<ShipmentStatus, { label: string; color: string; bg: string; dot: string }> = {
   PENDING:          { label: "Pending",           color: "#B45309", bg: "#FEF3C7", dot: "#F59E0B" },
   CONFIRMED:        { label: "Confirmed",          color: "#1D4ED8", bg: "#DBEAFE", dot: "#3B82F6" },
   PICKED_UP:        { label: "Picked Up",          color: "#6D28D9", bg: "#EDE9FE", dot: "#8B5CF6" },
@@ -20,7 +74,7 @@ const STATUS_META = {
   CANCELLED:        { label: "Cancelled",          color: "#374151", bg: "#F3F4F6", dot: "#9CA3AF" },
 };
 
-const STATUS_TRANSITIONS = {
+const STATUS_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
   PENDING:          ["CONFIRMED", "CANCELLED"],
   CONFIRMED:        ["PICKED_UP", "CANCELLED"],
   PICKED_UP:        ["IN_TRANSIT"],
@@ -32,14 +86,14 @@ const STATUS_TRANSITIONS = {
   CANCELLED:        [],
 };
 
-const SERVICE_META = {
+const SERVICE_META: Record<ServiceType, { label: string; color: string; bg: string }> = {
   STANDARD:  { label: "Standard",  color: "#374151", bg: "#F9FAFB" },
   EXPRESS:   { label: "Express",   color: "#1D4ED8", bg: "#DBEAFE" },
   OVERNIGHT: { label: "Overnight", color: "#7C3AED", bg: "#EDE9FE" },
   FREIGHT:   { label: "Freight",   color: "#B45309", bg: "#FEF3C7" },
 };
 
-const MOCK_SHIPMENTS = [
+const MOCK_SHIPMENTS: Shipment[] = [
   {
     id: "s1", trackingNumber: "SHP-M3A2K1-XQRP",
     customer: { name: "John Cavanaugh", email: "john@cavanaugh.com", phone: "+1 212-555-0142" },
@@ -136,17 +190,17 @@ const MOCK_SHIPMENTS = [
   },
 ];
 
-function fmtDate(d) {
+function fmtDate(d: string | Date): string {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
-function fmtTime(d) {
+function fmtTime(d: string | Date): string {
   return new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 }
-function courierName(id) {
+function courierName(id: string | null): string | null {
   return COURIERS.find(c => c.id === id)?.name ?? null;
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status }: { status: ShipmentStatus }) {
   const m = STATUS_META[status];
   return (
     <span style={{
@@ -161,7 +215,7 @@ function StatusBadge({ status }) {
   );
 }
 
-function StatCard({ label, value, sub, accent }) {
+function StatCard({ label, value, sub, accent }: { label: string; value: number; sub: string; accent?: string }) {
   return (
     <div style={{
       background: "#fff", border: "1px solid #E4E7EC", borderRadius: 12,
@@ -174,15 +228,15 @@ function StatCard({ label, value, sub, accent }) {
   );
 }
 
-const FILTERS = ["ALL", "PENDING", "CONFIRMED", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED", "FAILED"];
+const FILTERS: ("ALL" | ShipmentStatus)[] = ["ALL", "PENDING", "CONFIRMED", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED", "FAILED"];
 
 export default function AdminDashboard() {
-  const [shipments, setShipments]           = useState(MOCK_SHIPMENTS);
-  const [activeFilter, setActiveFilter]     = useState("ALL");
+  const [shipments, setShipments]           = useState<Shipment[]>(MOCK_SHIPMENTS);
+  const [activeFilter, setActiveFilter]     = useState<"ALL" | ShipmentStatus>("ALL");
   const [search, setSearch]                 = useState("");
-  const [drawer, setDrawer]                 = useState(null);
-  const [statusPopover, setStatusPopover]   = useState(null);
-  const [courierPopover, setCourierPopover] = useState(null);
+  const [drawer, setDrawer]                 = useState<string | null>(null);
+  const [statusPopover, setStatusPopover]   = useState<string | null>(null);
+  const [courierPopover, setCourierPopover] = useState<string | null>(null);
 
   useEffect(() => {
     const close = () => { setStatusPopover(null); setCourierPopover(null); };
@@ -190,7 +244,7 @@ export default function AdminDashboard() {
     return () => document.removeEventListener("click", close);
   }, []);
 
-  const updateStatus = (id, next) => {
+  const updateStatus = (id: string, next: ShipmentStatus) => {
     setShipments(prev => prev.map(s => {
       if (s.id !== id) return s;
       return {
@@ -207,11 +261,11 @@ export default function AdminDashboard() {
     setStatusPopover(null);
   };
 
-  const assignCourier = (id, cid) => {
+  const assignCourier = (id: string, cid: string) => {
     setShipments(prev => prev.map(s => {
       if (s.id !== id) return s;
       const autoConfirm = s.status === "PENDING";
-      const newStatus   = autoConfirm ? "CONFIRMED" : s.status;
+      const newStatus: ShipmentStatus = autoConfirm ? "CONFIRMED" : s.status;
       const newEvents   = [...s.trackingEvents];
       if (autoConfirm) {
         newEvents.push({ status: "CONFIRMED", note: `Courier assigned: ${courierName(cid)}`, location: null, createdAt: new Date().toISOString() });
@@ -221,7 +275,7 @@ export default function AdminDashboard() {
     setCourierPopover(null);
   };
 
-  const unassign = (id) => {
+  const unassign = (id: string) => {
     setShipments(prev => prev.map(s => s.id !== id ? s : { ...s, courierId: null }));
     setCourierPopover(null);
   };
