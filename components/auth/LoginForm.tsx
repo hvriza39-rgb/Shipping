@@ -4,7 +4,10 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
+const searchParams = useSearchParams();
+const registered = searchParams.get("registered");
 export default function LoginForm() {
   const router = useRouter();
   const [email, setEmail]       = useState("");
