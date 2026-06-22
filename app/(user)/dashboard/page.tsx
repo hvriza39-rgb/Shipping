@@ -8,24 +8,16 @@ export default async function DashboardPage() {
   const session = await auth();
   const userId  = session!.user.id;
 
-  const [shipments, counts] = await Promise.all([
-    prisma.shipment.findMany({
-      where: { customerId: userId },
-      take: 6,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true, trackingNumber: true, status: true,
-        serviceType: true, createdAt: true,
-        origin:      { select: { city: true, state: true } },
-        destination: { select: { city: true, state: true } },
-      },
-    }),
-    prisma.shipment.groupBy({
-      by: ["status"],
-      where: { customerId: userId },
-      _count: true,
-    }),
-  ]);
+  const [raw, counts] = await Promise.all([
+  prisma.shipment.findMany({ ... }),
+  prisma.shipment.groupBy({ ... }),
+]);
+
+const shipments = raw.map((s) => ({
+  ...s,
+  status:      s.status as string,
+  serviceType: s.serviceType as string,
+  createdAt:   s.createdAt.toISOString(),
 
   const total     = counts.reduce((a, c) => a + c._count, 0);
   const delivered = counts.find((c) => c.status === "DELIVERED")?._count ?? 0;
