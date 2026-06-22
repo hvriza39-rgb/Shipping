@@ -5,12 +5,30 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
+const DISPLAY = "var(--font-display), 'Arial Narrow', sans-serif";
+const BODY    = "var(--font-body), system-ui, sans-serif";
+const MONO    = "var(--font-mono), 'Courier New', monospace";
+
+const INK          = "#1C2B3A";
+const INK_SOFT     = "#4B5A68";
+const NIGHT        = "#14181C";
+const STAMP        = "#B23A2E";
+const ROUTE        = "#2C6E78";
+const LEDGER_GREEN = "#3F7D5C";
+const PAPER_LIGHT  = "#FBF8EF";
+const PAPER_LINE   = "#D8CBAA";
+
 function RegisteredBanner() {
   const searchParams = useSearchParams();
   if (!searchParams.get("registered")) return null;
   return (
-    <div style={{ background: "#F0FDF4", color: "#15803D", border: "1px solid #BBF7D0", borderRadius: 8, padding: "10px 13px", fontSize: 13, fontWeight: 500, marginBottom: 20 }}>
-      Account created — sign in to continue.
+    <div style={{
+      background: "rgba(63,125,92,0.07)", color: LEDGER_GREEN, border: `1.5px solid ${LEDGER_GREEN}`,
+      borderRadius: 3, padding: "10px 13px", fontSize: 13, fontWeight: 500, marginBottom: 22,
+      fontFamily: BODY, display: "flex", alignItems: "center", gap: 8,
+    }}>
+      <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: 11, letterSpacing: "0.06em" }}>VERIFIED &mdash;</span>
+      Account created. Sign in to continue.
     </div>
   );
 }
@@ -21,10 +39,6 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
-
-  
-
-  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,9 +65,11 @@ export default function LoginForm() {
     <div style={styles.page}>
       {/* Left panel */}
       <div style={styles.panel}>
+        <div style={styles.barcode} />
+
         <div style={styles.logo}>
           <div style={styles.logoMark}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
               <rect x="9" y="11" width="14" height="10" rx="2"/>
               <circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
@@ -63,6 +79,7 @@ export default function LoginForm() {
         </div>
 
         <div style={styles.panelBody}>
+          <div style={styles.eyebrow}>Manifest &mdash; Account Access</div>
           <h2 style={styles.panelHeading}>Every package,<br />accounted for.</h2>
           <p style={styles.panelSub}>Real-time tracking, seamless booking, and full visibility from pickup to delivery.</p>
 
@@ -78,18 +95,19 @@ export default function LoginForm() {
               <div key={i} style={{ display: "flex", gap: 12 }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 18, flexShrink: 0 }}>
                   <div style={{
-                    width: 10, height: 10, borderRadius: "50%", flexShrink: 0, marginTop: 3,
-                    background: step.done ? "#fff" : "rgba(255,255,255,0.25)",
-                    border: step.done ? "none" : "1.5px solid rgba(255,255,255,0.35)",
+                    width: 9, height: 9, borderRadius: "50%", flexShrink: 0, marginTop: 3,
+                    background: step.done ? LEDGER_GREEN : "transparent",
+                    border: step.done ? "none" : "1.5px solid rgba(255,255,255,0.3)",
                   }} />
                   {i < arr.length - 1 && (
-                    <div style={{ width: 1.5, flex: 1, minHeight: 18, background: "rgba(255,255,255,0.2)" }} />
+                    <div style={{ width: 1.5, flex: 1, minHeight: 18, background: "rgba(255,255,255,0.15)" }} />
                   )}
                 </div>
                 <div style={{ paddingBottom: 14 }}>
                   <div style={{
-                    fontSize: 13, fontWeight: step.done ? 600 : 400,
-                    color: step.done ? "#fff" : "rgba(255,255,255,0.45)",
+                    fontFamily: MONO, fontSize: 12, fontWeight: step.done ? 600 : 400,
+                    letterSpacing: "0.02em",
+                    color: step.done ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)",
                   }}>
                     {step.label}
                   </div>
@@ -103,7 +121,8 @@ export default function LoginForm() {
       {/* Right panel — form */}
       <div style={styles.form}>
         <div style={styles.formInner}>
-          <h1 style={styles.formHeading}>Sign in</h1>
+          <div style={styles.formEyebrow}>Sign in</div>
+          <h1 style={styles.formHeading}>Access your account</h1>
           <p style={styles.formSub}>
             Don&apos;t have an account?{" "}
             <Link href="/register" style={styles.link}>Create one</Link>
@@ -142,7 +161,9 @@ export default function LoginForm() {
             </div>
 
             {error && (
-              <div style={styles.error}>{error}</div>
+              <div style={styles.error}>
+                <span style={{ fontFamily: MONO, fontWeight: 700 }}>ERROR &mdash;</span> {error}
+              </div>
             )}
 
             <button type="submit" disabled={loading} style={loading ? { ...styles.button, ...styles.buttonDisabled } : styles.button}>
@@ -158,35 +179,45 @@ export default function LoginForm() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     display: "flex", minHeight: "100vh",
-    fontFamily: "'Inter', system-ui, sans-serif",
+    fontFamily: BODY,
   },
   panel: {
     width: 420, flexShrink: 0,
-    background: "#2563EB",
-    padding: "40px 44px",
+    background: NIGHT,
+    padding: "0 44px 40px",
     display: "flex", flexDirection: "column",
     position: "sticky", top: 0, height: "100vh",
+  },
+  barcode: {
+    height: 16, margin: "22px 0 26px", width: "100%",
+    backgroundImage: "repeating-linear-gradient(90deg, #fff 0px, #fff 2px, transparent 2px, transparent 5px, #fff 5px, #fff 6px, transparent 6px, transparent 11px, #fff 11px, #fff 14px, transparent 14px, transparent 18px)",
+    opacity: 0.18,
   },
   logo: {
     display: "flex", alignItems: "center", gap: 10, marginBottom: "auto",
   },
   logoMark: {
-    width: 32, height: 32, background: "rgba(255,255,255,0.15)",
-    borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+    width: 30, height: 30, background: STAMP,
+    borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center",
   },
   logoText: {
-    color: "#fff", fontWeight: 800, fontSize: 17, letterSpacing: "-0.03em",
+    color: "#fff", fontFamily: DISPLAY, fontWeight: 700, fontSize: 17,
+    letterSpacing: "0.01em", textTransform: "uppercase",
   },
   panelBody: {
-    marginBottom: 60,
+    marginBottom: 56,
+  },
+  eyebrow: {
+    fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
+    textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 16,
   },
   panelHeading: {
-    color: "#fff", fontSize: 28, fontWeight: 800,
-    letterSpacing: "-0.04em", lineHeight: 1.2,
+    color: "#fff", fontFamily: DISPLAY, fontSize: 30, fontWeight: 700,
+    letterSpacing: "0.005em", lineHeight: 1.15, textTransform: "uppercase",
     margin: "0 0 14px",
   },
   panelSub: {
-    color: "rgba(255,255,255,0.65)", fontSize: 14, lineHeight: 1.6,
+    color: "rgba(255,255,255,0.55)", fontFamily: BODY, fontSize: 14, lineHeight: 1.6,
     margin: "0 0 36px",
   },
   timeline: {
@@ -194,17 +225,21 @@ const styles: Record<string, React.CSSProperties> = {
   },
   form: {
     flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-    background: "#fff", padding: "40px 24px",
+    background: PAPER_LIGHT, padding: "40px 24px",
   },
   formInner: {
     width: "100%", maxWidth: 380,
   },
+  formEyebrow: {
+    fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
+    textTransform: "uppercase", color: ROUTE, marginBottom: 12,
+  },
   formHeading: {
-    fontSize: 26, fontWeight: 800, letterSpacing: "-0.04em",
-    color: "#101828", margin: "0 0 6px",
+    fontFamily: DISPLAY, fontSize: 26, fontWeight: 700, letterSpacing: "0.005em",
+    color: INK, margin: "0 0 8px", textTransform: "uppercase",
   },
   formSub: {
-    fontSize: 14, color: "#667085", margin: "0 0 32px",
+    fontFamily: BODY, fontSize: 14, color: INK_SOFT, margin: "0 0 32px",
   },
   fields: {
     display: "flex", flexDirection: "column", gap: 18,
@@ -213,33 +248,34 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex", flexDirection: "column", gap: 6,
   },
   label: {
-    fontSize: 13, fontWeight: 600, color: "#374151",
+    fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: "0.06em",
+    textTransform: "uppercase", color: INK_SOFT,
   },
   input: {
-    padding: "10px 13px", borderRadius: 8,
-    border: "1.5px solid #E4E7EC", fontSize: 14,
-    color: "#101828", outline: "none", background: "#fff",
+    padding: "10px 13px", borderRadius: 3,
+    border: `1.5px solid ${PAPER_LINE}`, fontSize: 14, fontFamily: BODY,
+    color: INK, outline: "none", background: "#fff",
     transition: "border-color 0.15s",
   },
   inputFocus: {
-    padding: "10px 13px", borderRadius: 8,
-    border: "1.5px solid #2563EB", fontSize: 14,
-    color: "#101828", outline: "none", background: "#fff",
+    padding: "10px 13px", borderRadius: 3,
+    border: `1.5px solid ${ROUTE}`, fontSize: 14, fontFamily: BODY,
+    color: INK, outline: "none", background: "#fff",
   },
   error: {
-    background: "#FEF2F2", color: "#B91C1C",
-    border: "1px solid #FECACA", borderRadius: 8,
-    padding: "10px 13px", fontSize: 13, fontWeight: 500,
+    background: "rgba(178,58,46,0.06)", color: STAMP,
+    border: `1.5px solid ${STAMP}`, borderRadius: 3,
+    padding: "10px 13px", fontSize: 13, fontWeight: 500, fontFamily: BODY,
   },
   button: {
-    padding: "11px", background: "#2563EB", color: "#fff",
-    border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700,
-    cursor: "pointer", marginTop: 4, letterSpacing: "-0.01em",
+    padding: "12px", background: INK, color: "#fff",
+    border: "none", borderRadius: 3, fontSize: 14, fontWeight: 700, fontFamily: BODY,
+    cursor: "pointer", marginTop: 4, letterSpacing: "0.01em",
   },
   buttonDisabled: {
-    opacity: 0.6, cursor: "not-allowed",
+    opacity: 0.55, cursor: "not-allowed",
   },
   link: {
-    color: "#2563EB", fontWeight: 600, textDecoration: "none",
+    color: ROUTE, fontWeight: 600, textDecoration: "none",
   },
 };
