@@ -13,8 +13,8 @@ export default async function DashboardPage() {
       where: { customerId: userId },
       orderBy: { createdAt: "desc" },
       include: {
-    origin: { select: { city: true, state: true } },
-    destination: { select: { city: true, state: true } },
+    origin: { city: s.origin.city, state: s.origin.state },
+    destination: { city: s.destination.city,
       }, 
     }),
     prisma.shipment.groupBy({
