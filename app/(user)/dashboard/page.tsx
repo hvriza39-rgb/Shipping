@@ -10,12 +10,12 @@ export default async function DashboardPage() {
 
   const [raw, counts] = await Promise.all([
     prisma.shipment.findMany({
-      where: { userId },
+      where: { customerId: userId },
       orderBy: { createdAt: "desc" },
     }),
     prisma.shipment.groupBy({
       by: ["status"],
-      where: { userId },
+      where: { customerId: userId },
       _count: true,
     }),
   ]);
