@@ -12,6 +12,10 @@ export default async function DashboardPage() {
     prisma.shipment.findMany({
       where: { customerId: userId },
       orderBy: { createdAt: "desc" },
+      include: {
+    origin: { select: { city: true, state: true } },
+    destination: { select: { city: true, state: true } },
+      }, 
     }),
     prisma.shipment.groupBy({
       by: ["status"],
@@ -25,6 +29,9 @@ export default async function DashboardPage() {
     status: s.status as string,
     serviceType: s.serviceType as string,
     createdAt: s.createdAt.toISOString(),
+    
+    origin: { select: { city: true, state: true } },
+    destination: { select: { city: true, state: true } },
   }));
 
   const total = counts.reduce((a, c) => a + c._count, 0);
