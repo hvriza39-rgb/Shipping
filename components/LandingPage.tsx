@@ -137,7 +137,7 @@ export default function LandingPage() {
       </nav>
 
       {/* HERO */}
-      <section style={{ minHeight: "100vh", background: linear-gradient(135deg, #ffffff, #b0eaeb);, display: "flex", flexDirection: "column", justifyContent: "center", padding: "100px 40px 0", position: "relative", overflow: "hidden" }}>
+      <section style={{ minHeight: "100vh", background: linear-gradient(135deg, #ffffff, #b0eaeb), display: "flex", flexDirection: "column", justifyContent: "center", padding: "100px 40px 0", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px)", backgroundSize: "56px 56px" }} />
         <div style={{ position: "absolute", top: "15%", left: "52%", width: 580, height: 580, background: "radial-gradient(circle, rgba(37,99,235,0.16) 0%, transparent 70%)", zIndex: 0, pointerEvents: "none" }} />
 
