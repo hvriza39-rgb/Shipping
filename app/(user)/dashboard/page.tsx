@@ -6,25 +6,33 @@ export const metadata = { title: "Dashboard | SwiftShip" };
 
 export default async function DashboardPage() {
   const session = await auth();
-  const userId  = session!.user.id;
+  const userId = session!.user.id;
 
   const [raw, counts] = await Promise.all([
-  prisma.shipment.findMany({ ... }),
-  prisma.shipment.groupBy({ ... }),
-]);
+    prisma.shipment.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.shipment.groupBy({
+      by: ["status"],
+      where: { userId },
+      _count: true,
+    }),
+  ]);
 
-const shipments = raw.map((s) => ({
-  ...s,
-  status:      s.status as string,
-  serviceType: s.serviceType as string,
-  createdAt:   s.createdAt.toISOString(),
+  const shipments = raw.map((s) => ({
+    ...s,
+    status: s.status as string,
+    serviceType: s.serviceType as string,
+    createdAt: s.createdAt.toISOString(),
+  }));
 
-  const total     = counts.reduce((a, c) => a + c._count, 0);
+  const total = counts.reduce((a, c) => a + c._count, 0);
   const delivered = counts.find((c) => c.status === "DELIVERED")?._count ?? 0;
-  const active    = counts
+  const active = counts
     .filter((c) => ["CONFIRMED", "PICKED_UP", "IN_TRANSIT", "OUT_FOR_DELIVERY"].includes(c.status))
     .reduce((a, c) => a + c._count, 0);
-  const pending   = counts.find((c) => c.status === "PENDING")?._count ?? 0;
+  const pending = counts.find((c) => c.status === "PENDING")?._count ?? 0;
 
   return (
     <Dashboard
