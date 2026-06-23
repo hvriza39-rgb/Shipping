@@ -11,7 +11,7 @@ const DISPLAY = "var(--font-display), 'Arial Narrow', sans-serif";
 const BODY    = "var(--font-body), system-ui, sans-serif";
 const MONO    = "var(--font-mono), 'Courier New', monospace";
 
-const PAPER       = "#D1EBE1";
+const PAPER       = "#D2EEEC";
 const PAPER_LIGHT = "#DFF3EF";
 const PAPER_LINE  = "#D8CBAA";
 const PAPER_DARK  = "#E6D9B8";
