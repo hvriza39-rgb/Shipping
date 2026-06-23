@@ -350,7 +350,7 @@ export default function BookShipment() {
       </div>
 
       {/* Step content */}
-      <div style={{ background: "#D2EEEC", border: "1px solid #E4E7EC", borderRadius: 14, padding: "28px 28px" }}>
+      <div style={{ background: "#fff", border: "1px solid #E4E7EC", borderRadius: 14, padding: "28px 28px" }}>
         {step === 0 && <AddressForm title="Origin Address"      address={origin}      onChange={setOrigin} />}
         {step === 1 && <AddressForm title="Destination Address" address={destination} onChange={setDest}   />}
         {step === 2 && <PackageForm pkg={pkg} onChange={setPkg} />}
