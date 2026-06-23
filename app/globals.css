@@ -1,3 +1,133 @@
+/* ─── Design Tokens ─────────────────────────────── */
+:root {
+  /* Brand */
+  --color-primary:        #2563EB;
+  --color-primary-light:  #EFF6FF;
+  --color-primary-dark:   #1D4ED8;
+  --color-primary-border: #BFDBFE;
+
+  /* Neutral */
+  --color-ink:         #0C1421;
+  --color-heading:     #101828;
+  --color-body:        #374151;
+  --color-muted:       #667085;
+  --color-subtle:      #9CA3AF;
+  --color-placeholder: #C0C7D0;
+
+  /* Surfaces */
+  --color-bg:           #F8F9FB;
+  --color-surface:      #FFFFFF;
+  --color-surface-alt:  #F8F9FB;
+  --color-surface-hover:#F2F4F7;
+
+  /* Borders */
+  --color-border:       #E4E7EC;
+  --color-border-light: #F2F4F7;
+
+  /* Feedback */
+  --color-success-text:   #15803D;
+  --color-success-bg:     #F0FDF4;
+  --color-success-border: #BBF7D0;
+
+  --color-error-text:   #B91C1C;
+  --color-error-bg:     #FEF2F2;
+  --color-error-border: #FECACA;
+
+  --color-info-text:   #1D4ED8;
+  --color-info-bg:     #EFF6FF;
+  --color-info-border: #BFDBFE;
+
+  --color-warn-text:   #B45309;
+  --color-warn-bg:     #FEF3C7;
+  --color-warn-border: #FDE68A;
+
+  /* Status — Pending */
+  --status-pending-text: #B45309;
+  --status-pending-bg:   #FEF3C7;
+  --status-pending-dot:  #F59E0B;
+
+  /* Status — Confirmed */
+  --status-confirmed-text: #1D4ED8;
+  --status-confirmed-bg:   #DBEAFE;
+  --status-confirmed-dot:  #3B82F6;
+
+  /* Status — Picked Up */
+  --status-picked-text: #6D28D9;
+  --status-picked-bg:   #EDE9FE;
+  --status-picked-dot:  #8B5CF6;
+
+  /* Status — In Transit */
+  --status-transit-text: #0369A1;
+  --status-transit-bg:   #E0F2FE;
+  --status-transit-dot:  #0EA5E9;
+
+  /* Status — Out for Delivery */
+  --status-ofd-text: #C2410C;
+  --status-ofd-bg:   #FFEDD5;
+  --status-ofd-dot:  #F97316;
+
+  /* Status — Delivered */
+  --status-delivered-text: #15803D;
+  --status-delivered-bg:   #DCFCE7;
+  --status-delivered-dot:  #22C55E;
+
+  /* Status — Failed */
+  --status-failed-text: #B91C1C;
+  --status-failed-bg:   #FEE2E2;
+  --status-failed-dot:  #EF4444;
+
+  /* Status — Cancelled / Returned */
+  --status-neutral-text: #374151;
+  --status-neutral-bg:   #F3F4F6;
+  --status-neutral-dot:  #9CA3AF;
+
+  /* Service types */
+  --service-standard-text:  #374151;
+  --service-standard-bg:    #F9FAFB;
+  --service-express-text:   #1D4ED8;
+  --service-express-bg:     #DBEAFE;
+  --service-overnight-text: #7C3AED;
+  --service-overnight-bg:   #EDE9FE;
+  --service-freight-text:   #B45309;
+  --service-freight-bg:     #FEF3C7;
+
+  /* Nav */
+  --color-nav-bg:          #0C1421;
+  --color-nav-border:      rgba(255,255,255,0.07);
+  --color-nav-text:        rgba(255,255,255,0.55);
+  --color-nav-text-hover:  rgba(255,255,255,0.9);
+
+  /* Sidebar */
+  --color-sidebar-bg:      #FFFFFF;
+  --color-sidebar-border:  #E4E7EC;
+
+  /* Typography */
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-syne), sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Mono', monospace;
+
+  /* Radius */
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  20px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+}
+
+/* ─── Print ──────────────────────────────────────── */
+@media print {
+  aside,
+  nav,
+  .no-print { display: none !important; }
+  body { background: #fff !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
