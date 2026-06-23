@@ -12,7 +12,7 @@ const BODY    = "var(--font-body), system-ui, sans-serif";
 const MONO    = "var(--font-mono), 'Courier New', monospace";
 
 const PAPER       = "#D1EBE1";
-const PAPER_LIGHT = "#C4E9E1";
+const PAPER_LIGHT = "#DFF3EF";
 const PAPER_LINE  = "#D8CBAA";
 const PAPER_DARK  = "#E6D9B8";
 const INK         = "#1C2B3A";
