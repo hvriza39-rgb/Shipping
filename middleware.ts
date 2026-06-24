@@ -33,7 +33,7 @@ export default auth((req) => {
   // -> send them to the admin panel instead
   if (pathname.startsWith("/dashboard")) {
     if (role === "ADMIN" || role === "STAFF") {
-      return NextResponse.redirect(new URL("/admin", req.url));
+      return NextResponse.redirect(new URL("/admin/dashboard", req.url));
     }
   }
 
