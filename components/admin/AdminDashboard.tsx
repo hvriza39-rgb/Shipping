@@ -1,5 +1,9 @@
 'use client';
 import { useState, useEffect } from "react";
+const [locationModal, setLocationModal] = useState<string | null>(null); // shipment id
+const [locForm, setLocForm] = useState({ status: "", location: "", note: "" });
+const [locLoading, setLocLoading] = useState(false);
+const [locError, setLocError] = useState("");
 
 type ShipmentStatus =
   | "PENDING"
@@ -53,6 +57,50 @@ interface Shipment {
   estimatedDelivery?: string;
   deliveredAt?: string;
   trackingEvents: TrackingEvent[];
+  const pushTrackingEvent = async (id: string) => {
+  setLocLoading(true);
+  setLocError("");
+  try {
+    const res = await fetch(`/api/shipments/${id}/tracking`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status:   locForm.status,
+        location: locForm.location || null,
+        note:     locForm.note    || null,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Failed to update.");
+
+    // Update local state
+    setShipments((prev) =>
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        return {
+          ...s,
+          status: locForm.status,
+          trackingEvents: [
+            ...s.trackingEvents,
+            {
+              id:        Math.random().toString(),
+              status:    locForm.status,
+              location:  locForm.location || null,
+              note:      locForm.note     || null,
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        };
+      })
+    );
+    setLocationModal(null);
+    setLocForm({ status: "", location: "", note: "" });
+  } catch (e: any) {
+    setLocError(e.message);
+  } finally {
+    setLocLoading(false);
+  }
+};
 }
 
 const COURIERS: Courier[] = [
@@ -531,6 +579,26 @@ export default function AdminDashboard() {
                         }}>
                           {isDrawerOpen ? "Close" : "View"}
                         </button>
+                        <td style={{ padding: "13px 16px", display: "flex", alignItems: "center", gap: 8 }}>
+  <button onClick={() => {
+    setLocForm({ status: s.status, location: "", note: "" });
+    setLocationModal(s.id);
+    setDrawer(null);
+  }} style={{
+    padding: "6px 12px", fontSize: 12, fontWeight: 600, borderRadius: 7, cursor: "pointer",
+    background: "#FEF3C7", color: "#B45309", border: "1px solid #FDE68A",
+  }}>
+    Update
+  </button>
+  <button onClick={() => setDrawer(isDrawerOpen ? null : s.id)} style={{
+    padding: "6px 12px", fontSize: 12, fontWeight: 600, borderRadius: 7, cursor: "pointer",
+    background: isDrawerOpen ? "#EFF6FF" : "#F8F9FB",
+    color: isDrawerOpen ? "#2563EB" : "#374151",
+    border: `1px solid ${isDrawerOpen ? "#BFDBFE" : "#E4E7EC"}`,
+  }}>
+    {isDrawerOpen ? "Close" : "View"}
+  </button>
+</td>
                       </td>
                     </tr>
                   );
@@ -637,6 +705,115 @@ export default function AdminDashboard() {
                     </div>
                   );
                 })}
+                {locationModal && (() => {
+  const s = shipments.find((x) => x.id === locationModal);
+  if (!s) return null;
+  const transitions = STATUS_TRANSITIONS[s.status] ?? [];
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {/* Overlay */}
+      <div
+        style={{ position: "absolute", inset: 0, background: "rgba(12,20,33,0.45)", backdropFilter: "blur(2px)" }}
+        onClick={() => { setLocationModal(null); setLocError(""); }}
+      />
+      {/* Modal */}
+      <div style={{ position: "relative", background: "#fff", borderRadius: 14, padding: 28, width: 440, boxShadow: "0 24px 64px rgba(0,0,0,0.2)", zIndex: 1 }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#0C1421", letterSpacing: "-0.02em" }}>Update Shipment</div>
+            <div style={{ fontFamily: "monospace", fontSize: 11, color: "#2563EB", fontWeight: 700, marginTop: 4 }}>{s.trackingNumber}</div>
+          </div>
+          <button
+            onClick={() => { setLocationModal(null); setLocError(""); }}
+            style={{ background: "#F8F9FB", border: "1px solid #E4E7EC", borderRadius: 8, width: 30, height: 30, cursor: "pointer", fontSize: 15, color: "#374151", display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Current status */}
+        <div style={{ background: "#F8F9FB", borderRadius: 8, padding: "10px 14px", marginBottom: 18, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 12, color: "#667085", fontWeight: 500 }}>Current status</span>
+          <StatusBadge status={s.status} />
+        </div>
+
+        {/* New status */}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>
+            New Status <span style={{ color: "#EF4444" }}>*</span>
+          </label>
+          <select
+            value={locForm.status}
+            onChange={(e) => setLocForm((f) => ({ ...f, status: e.target.value }))}
+            style={{ width: "100%", padding: "10px 13px", borderRadius: 8, border: "1.5px solid #E4E7EC", fontSize: 13, color: "#101828", outline: "none", background: "#fff", fontFamily: "inherit", cursor: "pointer" }}
+          >
+            <option value="">— Select status —</option>
+            {transitions.map((t) => (
+              <option key={t} value={t}>{STATUS_META[t]?.label ?? t}</option>
+            ))}
+            {/* Allow same status for location-only update */}
+            <option value={s.status}>{STATUS_META[s.status]?.label ?? s.status} (location update only)</option>
+          </select>
+        </div>
+
+        {/* Location */}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>
+            Current Location
+          </label>
+          <input
+            value={locForm.location}
+            onChange={(e) => setLocForm((f) => ({ ...f, location: e.target.value }))}
+            placeholder="e.g. Chicago, IL"
+            style={{ width: "100%", padding: "10px 13px", borderRadius: 8, border: "1.5px solid #E4E7EC", fontSize: 13, color: "#101828", outline: "none", background: "#fff", fontFamily: "inherit" }}
+            onFocus={(e) => { e.currentTarget.style.border = "1.5px solid #2563EB"; }}
+            onBlur={(e)  => { e.currentTarget.style.border = "1.5px solid #E4E7EC"; }}
+          />
+        </div>
+
+        {/* Note */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>
+            Note <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 400 }}>— optional</span>
+          </label>
+          <textarea
+            value={locForm.note}
+            onChange={(e) => setLocForm((f) => ({ ...f, note: e.target.value }))}
+            placeholder="e.g. Package arrived at sorting facility"
+            rows={3}
+            style={{ width: "100%", padding: "10px 13px", borderRadius: 8, border: "1.5px solid #E4E7EC", fontSize: 13, color: "#101828", outline: "none", background: "#fff", fontFamily: "inherit", resize: "vertical" }}
+            onFocus={(e) => { e.currentTarget.style.border = "1.5px solid #2563EB"; }}
+            onBlur={(e)  => { e.currentTarget.style.border = "1.5px solid #E4E7EC"; }}
+          />
+        </div>
+
+        {locError && (
+          <div style={{ background: "#FEF2F2", color: "#B91C1C", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 13px", fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
+            {locError}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            onClick={() => { setLocationModal(null); setLocError(""); }}
+            style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1.5px solid #E4E7EC", background: "#fff", fontSize: 13, fontWeight: 600, color: "#374151", cursor: "pointer" }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => pushTrackingEvent(locationModal)}
+            disabled={!locForm.status || locLoading}
+            style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 700, cursor: !locForm.status || locLoading ? "not-allowed" : "pointer", background: !locForm.status || locLoading ? "#93C5FD" : "#2563EB", color: "#fff" }}
+          >
+            {locLoading ? "Pushing update…" : "Push Update"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+})()}
               </div>
             </div>
           </div>
