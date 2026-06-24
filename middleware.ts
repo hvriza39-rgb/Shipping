@@ -20,10 +20,20 @@ export default auth((req) => {
     return NextResponse.redirect(url);
   }
 
+  const role = session!.user.role;
+
+  // Non admin/staff trying to reach the admin panel -> bounce to their dashboard
   if (pathname.startsWith("/admin")) {
-    const role = session!.user.role;
     if (role !== "ADMIN" && role !== "STAFF") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+  }
+
+  // Admin/staff landing on the regular dashboard (e.g. right after login)
+  // -> send them to the admin panel instead
+  if (pathname.startsWith("/dashboard")) {
+    if (role === "ADMIN" || role === "STAFF") {
+      return NextResponse.redirect(new URL("/admin", req.url));
     }
   }
 
