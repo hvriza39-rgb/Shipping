@@ -1,7 +1,7 @@
 /* ─── Design Tokens ─────────────────────────────── */
 :root {
   /* Brand — route orange replaces the old blue */
-  --color-primary:        #FFE7DA;
+  --color-primary:        #FF6A2C;
   --color-primary-light:  #FFE7DA;
   --color-primary-dark:   #D9551E;
   --color-primary-border: #FFC8A8;
