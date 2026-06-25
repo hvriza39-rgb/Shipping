@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -54,44 +54,103 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ProgressBar({ status }: { status: string }) {
-  const idx      = STATUS_ORDER.indexOf(status);
-  const isFailed = status === "FAILED" || status === "CANCELLED" || status === "RETURNED";
+/**
+ * Unified route + progress visual — replaces the old separate stepper,
+ * flat route line, and "Delivered" banner. The marker position is computed
+ * from the actual status, so it reflects real progress rather than sitting
+ * on a static plane icon.
+ */
+function RouteProgress({ shipment }: { shipment: ShipmentResult }) {
+  const { status, origin, destination, estimatedDelivery, deliveredAt } = shipment;
+  const isBad  = status === "FAILED" || status === "CANCELLED" || status === "RETURNED";
+  const idx     = STATUS_ORDER.indexOf(status);
+  const lastIdx = STATUS_ORDER.length - 1;
+
+  // For failed/cancelled/returned shipments, the line still shows how far it
+  // got — conventionally treated as "made it to out-for-delivery" — but in
+  // the failed color, with no pulsing marker since nothing is still moving.
+  const percent = isBad
+    ? (STATUS_ORDER.indexOf("OUT_FOR_DELIVERY") / lastIdx) * 100
+    : idx >= 0 ? (idx / lastIdx) * 100 : 0;
+
+  const destinationNote =
+    status === "DELIVERED" && deliveredAt ? `Delivered ${fmtDate(deliveredAt)}` :
+    status === "FAILED"     ? "Delivery attempt failed" :
+    status === "RETURNED"   ? "Returned to sender" :
+    status === "CANCELLED"  ? "Shipment cancelled" :
+    estimatedDelivery        ? `Est. ${fmtDate(estimatedDelivery)}` :
+    "Estimate pending";
+
+  const lineColor = isBad ? "var(--status-failed-dot)" : "var(--color-primary)";
+
   return (
-    <div style={{ marginBottom: 28 }}>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+    <div style={{ marginBottom: 26 }}>
+      {/* From / To */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 18, gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--color-subtle)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 4 }}>From</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--color-heading)", fontFamily: "var(--font-display)" }}>{origin.city}</div>
+          <div style={{ fontSize: 12, color: "var(--color-muted)" }}>{origin.state}, {origin.country}</div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--color-subtle)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 4 }}>To</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--color-heading)", fontFamily: "var(--font-display)" }}>{destination.city}</div>
+          <div style={{ fontSize: 12, color: "var(--color-muted)" }}>{destination.state}, {destination.country}</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: isBad ? "var(--status-failed-text)" : "var(--color-muted)", marginTop: 4 }}>
+            {destinationNote}
+          </div>
+        </div>
+      </div>
+
+      {/* Route line */}
+      <div style={{ position: "relative", height: 24, marginBottom: 6 }}>
+        <div style={{
+          position: "absolute", top: "50%", left: 0, right: 0, height: 2, transform: "translateY(-50%)",
+          backgroundImage: "linear-gradient(to right, var(--color-border) 0 6px, transparent 6px 12px)",
+          backgroundSize: "12px 2px", backgroundRepeat: "repeat-x",
+        }} />
+        <div style={{
+          position: "absolute", top: "50%", left: 0, height: 2, transform: "translateY(-50%)",
+          width: `${percent}%`, background: lineColor, transition: "width 0.4s ease",
+        }} />
+        <div style={{ position: "absolute", inset: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {STATUS_ORDER.map((s) => {
+            const i = STATUS_ORDER.indexOf(s);
+            const passed = !isBad && i <= idx;
+            return (
+              <div key={s} style={{
+                width: 9, height: 9, borderRadius: "50%", flexShrink: 0,
+                background: passed ? "var(--color-primary)" : "var(--color-surface)",
+                border: `2px solid ${passed ? "var(--color-primary)" : "var(--color-border)"}`,
+              }} />
+            );
+          })}
+        </div>
+        <div style={{
+          position: "absolute", top: "50%", left: `${percent}%`, width: 16, height: 16,
+          transform: "translate(-50%, -50%)", borderRadius: "50%", background: lineColor,
+          boxShadow: `0 0 0 4px ${isBad ? "rgba(201,72,58,0.18)" : "rgba(255,106,44,0.18)"}`,
+          transition: "left 0.4s ease",
+        }}>
+          {!isBad && status !== "DELIVERED" && (
+            <span className="route-marker-pulse" style={{
+              position: "absolute", inset: 0, borderRadius: "50%", background: lineColor,
+              animation: "pulse 1.8s ease-out infinite",
+            }} />
+          )}
+        </div>
+      </div>
+
+      {/* Step labels — hidden on narrow screens via globals.css */}
+      <div className="route-step-labels" style={{ display: "grid", gridTemplateColumns: `repeat(${STATUS_ORDER.length}, 1fr)` }}>
         {STATUS_ORDER.map((s, i) => {
-          const done   = !isFailed && i <= idx;
-          const active = !isFailed && i === idx;
+          const passed = !isBad && i <= idx;
+          const align = i === 0 ? "left" : i === STATUS_ORDER.length - 1 ? "right" : "center";
           return (
-            <div key={s} style={{ display: "flex", alignItems: "center", flex: i < STATUS_ORDER.length - 1 ? 1 : undefined }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                <div style={{
-                  width: 24, height: 24, borderRadius: "50%",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: isFailed ? "var(--status-failed-bg)" : done ? "var(--color-primary)" : "var(--color-border)",
-                  border: active ? "2.5px solid var(--color-primary)" : "none",
-                  flexShrink: 0,
-                }}>
-                  {done && !active && (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20,6 9,17 4,12"/>
-                    </svg>
-                  )}
-                  {active && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--color-primary)" }} />}
-                  {isFailed && i === 0 && (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--status-failed-text)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                  )}
-                </div>
-                <span style={{ fontSize: 9, fontWeight: 600, color: done ? "var(--color-primary)" : "var(--color-subtle)", whiteSpace: "nowrap", letterSpacing: "0.03em" }}>
-                  {STATUS_META[s]?.label.split(" ")[0]}
-                </span>
-              </div>
-              {i < STATUS_ORDER.length - 1 && (
-                <div style={{ flex: 1, height: 2.5, background: !isFailed && i < idx ? "var(--color-primary)" : "var(--color-border)", margin: "0 4px", marginBottom: 22, borderRadius: 2, transition: "background 0.3s" }} />
-              )}
+            <div key={s} style={{ textAlign: align as any }}>
+              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.02em", color: passed ? "var(--color-primary)" : "var(--color-subtle)" }}>
+                {STATUS_META[s]?.label}
+              </span>
             </div>
           );
         })}
@@ -121,28 +180,28 @@ export default function TrackingPage() {
       const res  = await fetch(`/api/tracking/${encodeURIComponent(q.trim())}`);
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "No shipment found.");
+        setError(data.error ?? "No shipment matches that tracking number.");
         return;
       }
       setResult(data);
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Couldn't reach the server — try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setQuery(input);
     search(input);
   };
 
   return (
-    <div style={{ fontFamily: "var(--font-sans)", minHeight: "100vh", background: "var(--color-ink)" }}>
+    <div style={{ fontFamily: "var(--font-sans)", minHeight: "100vh", background: "var(--color-bg)" }}>
 
       {/* Nav */}
-      <nav style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+      <nav style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", borderBottom: "1px solid var(--color-nav-border)", background: "var(--color-nav-bg)" }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
           <div style={{ width: 28, height: 28, background: "var(--color-primary)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -151,40 +210,49 @@ export default function TrackingPage() {
               <circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
             </svg>
           </div>
-          <span style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 15, color: "#fff", letterSpacing: "-0.02em" }}>SwiftShip</span>
+          <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 15, color: "var(--color-ink)", letterSpacing: "-0.02em" }}>SwiftShip</span>
         </Link>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Link href="/login"    style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.5)", textDecoration: "none", padding: "6px 12px" }}>Sign in</Link>
-          <Link href="/register" style={{ fontSize: 13, fontWeight: 700, color: "#fff", textDecoration: "none", padding: "6px 14px", background: "var(--color-primary)", borderRadius: "var(--radius-sm)" }}>Get started</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Link href="/login" className="nav-link" style={{ fontSize: 13, fontWeight: 500, color: "var(--color-nav-text)", textDecoration: "none", padding: "6px 12px" }}>Sign in</Link>
+          <Link href="/register" className="btn-p" style={{ fontSize: 13, fontWeight: 700, color: "#fff", textDecoration: "none", padding: "6px 14px", background: "var(--color-primary)", borderRadius: "var(--radius-sm)" }}>Get started</Link>
         </div>
       </nav>
 
       {/* Hero search */}
       <div style={{ padding: "64px 24px 48px", textAlign: "center" }}>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 36, fontWeight: 800, color: "#fff", letterSpacing: "-0.04em", margin: "0 0 10px" }}>
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 7,
+          fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 500,
+          color: "var(--color-primary-dark)", letterSpacing: "0.06em", marginBottom: 16,
+        }}>
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--color-primary)", boxShadow: "0 0 0 3px rgba(255,106,44,0.18)" }} />
+          EN ROUTE — REAL TIME
+        </div>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 36, fontWeight: 700, color: "var(--color-heading)", letterSpacing: "-0.03em", margin: "0 0 10px" }}>
           Track your package
         </h1>
-        <p style={{ fontSize: 15, color: "rgba(255,255,255,0.45)", margin: "0 0 32px" }}>
+        <p style={{ fontSize: 15, color: "var(--color-muted)", margin: "0 0 32px" }}>
           Enter your tracking number to get a real-time update.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", gap: 10, maxWidth: 540, margin: "0 auto" }}>
           <input
+            className="tracker-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="e.g. SHP-M3A2K1-XQRP"
             style={{
               flex: 1, padding: "13px 18px", borderRadius: "var(--radius-md)",
-              border: "1.5px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.07)",
-              color: "#fff", fontSize: 14, outline: "none", fontFamily: "var(--font-mono)",
+              border: "1.5px solid var(--color-border)", background: "var(--color-surface)",
+              color: "var(--color-ink)", fontSize: 14, outline: "none", fontFamily: "var(--font-mono)",
               letterSpacing: "0.02em",
             }}
             onFocus={(e) => { e.currentTarget.style.border = "1.5px solid var(--color-primary)"; }}
-            onBlur={(e)  => { e.currentTarget.style.border = "1.5px solid rgba(255,255,255,0.12)"; }}
+            onBlur={(e)  => { e.currentTarget.style.border = "1.5px solid var(--color-border)"; }}
           />
-          <button type="submit" disabled={loading} style={{
+          <button type="submit" disabled={loading} className="btn-p" style={{
             padding: "13px 24px", borderRadius: "var(--radius-md)", border: "none",
-            background: loading ? "#93C5FD" : "var(--color-primary)",
+            background: loading ? "var(--color-primary-border)" : "var(--color-primary)",
             color: "#fff", fontSize: 13, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
             whiteSpace: "nowrap",
           }}>
@@ -216,29 +284,8 @@ export default function TrackingPage() {
 
             <div style={{ padding: "24px" }}>
 
-              {/* Progress bar */}
-              <ProgressBar status={result.status} />
-
-              {/* Route */}
-              <div style={{ display: "flex", alignItems: "center", gap: 16, background: "var(--color-surface-alt)", borderRadius: "var(--radius-md)", padding: "16px 20px", marginBottom: 20 }}>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: "var(--color-subtle)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 3 }}>From</div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: "var(--color-ink)" }}>{result.origin.city}</div>
-                  <div style={{ fontSize: 12, color: "var(--color-muted)" }}>{result.origin.state}, {result.origin.country}</div>
-                </div>
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <div style={{ fontSize: 18 }}>&#9992;</div>
-                  <div style={{ width: "100%", height: 2, background: "var(--color-border)" }} />
-                  {result.estimatedDelivery && (
-                    <div style={{ fontSize: 10, color: "var(--color-subtle)", fontWeight: 500 }}>Est. {fmtDate(result.estimatedDelivery)}</div>
-                  )}
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: "var(--color-subtle)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 3 }}>To</div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: "var(--color-ink)" }}>{result.destination.city}</div>
-                  <div style={{ fontSize: 12, color: "var(--color-muted)" }}>{result.destination.state}, {result.destination.country}</div>
-                </div>
-              </div>
+              {/* Unified route + progress */}
+              <RouteProgress shipment={result} />
 
               {/* Package info strip */}
               <div style={{ display: "flex", gap: 0, marginBottom: 20, border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
@@ -254,16 +301,6 @@ export default function TrackingPage() {
                   </div>
                 ))}
               </div>
-
-              {/* Delivered banner */}
-              {result.status === "DELIVERED" && result.deliveredAt && (
-                <div style={{ background: "var(--color-success-bg)", border: "1px solid var(--color-success-border)", borderRadius: "var(--radius-md)", padding: "12px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>&#10003;</span>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--color-success-text)" }}>
-                    Delivered on {fmtDate(result.deliveredAt)}
-                  </div>
-                </div>
-              )}
 
               {/* Timeline */}
               <div>
