@@ -1,110 +1,125 @@
 /* ─── Design Tokens ─────────────────────────────── */
 :root {
-  /* Brand */
-  --color-primary:        #2563EB;
-  --color-primary-light:  #EFF6FF;
-  --color-primary-dark:   #1D4ED8;
-  --color-primary-border: #BFDBFE;
+  /* Brand — route orange replaces the old blue */
+  --color-primary:        #FF6A2C;
+  --color-primary-light:  #FFE7DA;
+  --color-primary-dark:   #D9551E;
+  --color-primary-border: #FFC8A8;
 
-  /* Neutral */
-  --color-ink:         #0C1421;
-  --color-heading:     #101828;
-  --color-body:        #374151;
-  --color-muted:       #667085;
-  --color-subtle:      #9CA3AF;
-  --color-placeholder: #C0C7D0;
+  /* Secondary accent — customs teal */
+  --color-accent-teal:       #178F87;
+  --color-accent-teal-light: #DCEFEC;
 
-  /* Surfaces */
-  --color-bg:           #F8F9FB;
-  --color-surface:      #FFFFFF;
-  --color-surface-alt:  #F8F9FB;
-  --color-surface-hover:#F2F4F7;
+  /* Neutral / ink — text only now (no longer doubles as a page background) */
+  --color-ink:         #161D29;
+  --color-heading:     #1B2330;
+  --color-body:        #3E4654;
+  --color-muted:       #5B6472;
+  --color-subtle:      #828C99;
+  --color-placeholder: #ADB5BE;
+
+  /* Surfaces — paper world */
+  --color-bg:            #F1F3EC;
+  --color-surface:       #FBFCF8;
+  --color-surface-alt:   #EAEDE2;
+  --color-surface-hover: #E3E6D9;
 
   /* Borders */
-  --color-border:       #E4E7EC;
-  --color-border-light: #F2F4F7;
+  --color-border:       #D8DCD1;
+  --color-border-light: #E5E8DC;
 
   /* Feedback */
-  --color-success-text:   #15803D;
-  --color-success-bg:     #F0FDF4;
-  --color-success-border: #BBF7D0;
+  --color-success-text:   #1F7A52;
+  --color-success-bg:     #DCEEDD;
+  --color-success-border: #BBD9C4;
 
-  --color-error-text:   #B91C1C;
-  --color-error-bg:     #FEF2F2;
-  --color-error-border: #FECACA;
+  --color-error-text:   #A13E32;
+  --color-error-bg:     #F7E0DB;
+  --color-error-border: #E9C3B6;
 
-  --color-info-text:   #1D4ED8;
-  --color-info-bg:     #EFF6FF;
-  --color-info-border: #BFDBFE;
+  --color-info-text:   #0E6E68;
+  --color-info-bg:     #DCEFEC;
+  --color-info-border: #BFE0DC;
 
   --color-warn-text:   #B45309;
-  --color-warn-bg:     #FEF3C7;
-  --color-warn-border: #FDE68A;
+  --color-warn-bg:     #FBE9C7;
+  --color-warn-border: #F3CE8E;
 
   /* Status — Pending */
   --status-pending-text: #B45309;
-  --status-pending-bg:   #FEF3C7;
-  --status-pending-dot:  #F59E0B;
+  --status-pending-bg:   #FBE9C7;
+  --status-pending-dot:  #E08B2E;
 
-  /* Status — Confirmed */
-  --status-confirmed-text: #1D4ED8;
-  --status-confirmed-bg:   #DBEAFE;
-  --status-confirmed-dot:  #3B82F6;
+  /* Status — Confirmed (neutral ink — decoupled from "blue = primary") */
+  --status-confirmed-text: #4B5360;
+  --status-confirmed-bg:   #E7E9DE;
+  --status-confirmed-dot:  #828C99;
 
   /* Status — Picked Up */
   --status-picked-text: #6D28D9;
-  --status-picked-bg:   #EDE9FE;
-  --status-picked-dot:  #8B5CF6;
+  --status-picked-bg:   #ECE4FB;
+  --status-picked-dot:  #9061E0;
 
-  /* Status — In Transit */
-  --status-transit-text: #0369A1;
-  --status-transit-bg:   #E0F2FE;
-  --status-transit-dot:  #0EA5E9;
+  /* Status — In Transit (cool tone — free to use now that blue isn't brand) */
+  --status-transit-text: #0E7490;
+  --status-transit-bg:   #DCEFF2;
+  --status-transit-dot:  #1AA6C4;
 
-  /* Status — Out for Delivery */
-  --status-ofd-text: #C2410C;
-  --status-ofd-bg:   #FFEDD5;
-  --status-ofd-dot:  #F97316;
+  /* Status — Out for Delivery (deeper variant of route orange) */
+  --status-ofd-text: #B14B1F;
+  --status-ofd-bg:   #FBDFCB;
+  --status-ofd-dot:  #E8632A;
 
   /* Status — Delivered */
-  --status-delivered-text: #15803D;
-  --status-delivered-bg:   #DCFCE7;
-  --status-delivered-dot:  #22C55E;
+  --status-delivered-text: #1F7A52;
+  --status-delivered-bg:   #DCEEDD;
+  --status-delivered-dot:  #34A06B;
 
   /* Status — Failed */
-  --status-failed-text: #B91C1C;
-  --status-failed-bg:   #FEE2E2;
-  --status-failed-dot:  #EF4444;
+  --status-failed-text: #A13E32;
+  --status-failed-bg:   #F7E0DB;
+  --status-failed-dot:  #C9483A;
 
   /* Status — Cancelled / Returned */
-  --status-neutral-text: #374151;
-  --status-neutral-bg:   #F3F4F6;
-  --status-neutral-dot:  #9CA3AF;
+  --status-neutral-text: #4B5360;
+  --status-neutral-bg:   #E7E9DE;
+  --status-neutral-dot:  #97A0AC;
 
   /* Service types */
-  --service-standard-text:  #374151;
-  --service-standard-bg:    #F9FAFB;
-  --service-express-text:   #1D4ED8;
-  --service-express-bg:     #DBEAFE;
-  --service-overnight-text: #7C3AED;
-  --service-overnight-bg:   #EDE9FE;
+  --service-standard-text:  #4B5360;
+  --service-standard-bg:    #F4F6EF;
+  --service-express-text:   #0E7490;
+  --service-express-bg:     #DCEFF2;
+  --service-overnight-text: #6D28D9;
+  --service-overnight-bg:   #ECE4FB;
   --service-freight-text:   #B45309;
-  --service-freight-bg:     #FEF3C7;
+  --service-freight-bg:     #FBE9C7;
 
-  /* Nav */
-  --color-nav-bg:          #0C1421;
-  --color-nav-border:      rgba(255,255,255,0.07);
-  --color-nav-text:        rgba(255,255,255,0.55);
-  --color-nav-text-hover:  rgba(255,255,255,0.9);
+  /* Nav — now light, blends into the page rather than a separate dark bar */
+  --color-nav-bg:         var(--color-bg);
+  --color-nav-border:     var(--color-border);
+  --color-nav-text:       var(--color-muted);
+  --color-nav-text-hover: var(--color-ink);
 
-  /* Sidebar */
-  --color-sidebar-bg:      #FFFFFF;
-  --color-sidebar-border:  #E4E7EC;
+  /* Sidebar (admin) */
+  --color-sidebar-bg:     var(--color-surface);
+  --color-sidebar-border: var(--color-border);
 
-  /* Typography */
+  /* Navy — the one contained dark surface in the system (e.g. a "live board"
+     style component). Not page backgrounds — kept deliberately rare. */
+  --color-navy-bg:          #101620;
+  --color-navy-border:      #283242;
+  --color-navy-text:        #E4E8EE;
+  --color-navy-text-muted:  #8FA0B8;
+
+  /* Typography
+     NOTE: changing these variables alone isn't enough — whatever loads Syne /
+     JetBrains Mono today (likely next/font/google in your root layout) needs
+     to load Space Grotesk / IBM Plex Mono instead, with a matching variable
+     name, or this will silently fall back to system fonts. */
   --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-display: var(--font-syne), sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Mono', monospace;
+  --font-display: var(--font-space-grotesk), sans-serif;
+  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
 
   /* Radius */
   --radius-sm:  6px;
@@ -113,9 +128,9 @@
   --radius-xl:  20px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.10);
 }
 
 /* ─── Print ──────────────────────────────────────── */
@@ -153,6 +168,12 @@
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.3; }
 }
+
+@keyframes pulse {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
 @keyframes stampIn {
   from { opacity: 0; transform: rotate(-3deg) scale(0.85); }
   to   { opacity: 1; transform: rotate(-3deg) scale(1); }
@@ -166,11 +187,26 @@
 .feat-card { transition: transform 0.2s, box-shadow 0.2s; }
 .feat-card:hover {
   transform: translateY(-5px) !important;
-  box-shadow: 0 16px 40px rgba(37, 99, 235, 0.12) !important;
+  box-shadow: 0 16px 40px rgba(255, 106, 44, 0.14) !important;
 }
 
-.btn-p:hover  { background: #1D4ED8 !important; }
-.btn-o:hover  { background: rgba(255, 255, 255, 0.08) !important; }
-.btn-w:hover  { background: #EFF6FF !important; }
-.nav-link:hover  { color: rgba(255, 255, 255, 0.9) !important; }
-.foot-link:hover { color: rgba(255, 255, 255, 0.6) !important; }
+.btn-p:hover  { background: var(--color-primary-dark) !important; }
+.btn-o:hover  { background: var(--color-surface-hover) !important; }
+.btn-w:hover  { background: var(--color-primary-light) !important; }
+.nav-link:hover  { color: var(--color-nav-text-hover) !important; }
+.foot-link:hover { color: var(--color-ink) !important; }
+
+.tracker-input::placeholder { color: var(--color-placeholder); }
+
+/* Step labels under the route progress line — drop on narrow screens rather
+   than wrap awkwardly; the line + badge + From/To already carry the meaning */
+@media (max-width: 480px) {
+  .route-step-labels { display: none; }
+}
+
+/* Respect reduced motion across all decorative animation */
+@media (prefers-reduced-motion: reduce) {
+  .h-card, .stamp, .h-title, .h-sub, .h-cta, .route-marker-pulse {
+    animation: none !important;
+  }
+}
