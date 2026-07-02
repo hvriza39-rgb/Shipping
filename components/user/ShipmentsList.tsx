@@ -31,8 +31,8 @@ function fmtDate(d: string) {
 function StatusBadge({ status }: { status: string }) {
   const m = STATUS_META[status] ?? STATUS_META["PENDING"];
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: "var(--radius-xl)", fontSize: 11, fontWeight: 600, color: m.color, background: m.bg }}>
-      <span style={{ width: 5, height: 5, borderRadius: "50%", background: m.dot }} />
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: "var(--radius-xl)", fontSize: 11, fontWeight: 600, color: m.color, background: m.bg, whiteSpace: "nowrap" }}>
+      <span style={{ width: 5, height: 5, borderRadius: "50%", background: m.dot, flexShrink: 0 }} />
       {m.label}
     </span>
   );
@@ -63,7 +63,7 @@ export default function ShipmentsList({ shipments }: { shipments: Shipment[] }) 
   });
 
   return (
-    <div style={{ padding: "32px 36px", maxWidth: 1100, margin: "0 auto", fontFamily: "var(--font-sans)" }}>
+    <div className="shipments-page" style={{ padding: "32px 36px", maxWidth: 1100, margin: "0 auto", fontFamily: "var(--font-sans)" }}>
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
@@ -94,6 +94,7 @@ export default function ShipmentsList({ shipments }: { shipments: Shipment[] }) 
                 cursor: "pointer", border: `1.5px solid ${active ? (m?.dot ?? "var(--color-primary)") : "var(--color-border)"}`,
                 background: active ? (m?.bg ?? "var(--color-primary-light)") : "var(--color-surface)",
                 color: active ? (m?.color ?? "var(--color-primary)") : "var(--color-muted)",
+                whiteSpace: "nowrap",
               }}>
                 {f === "ALL" ? "All" : f === "IN_TRANSIT" ? "In Transit" : STATUS_META[f]?.label ?? f}
                 <span style={{ marginLeft: 5, opacity: 0.65 }}>{count}</span>
@@ -101,19 +102,19 @@ export default function ShipmentsList({ shipments }: { shipments: Shipment[] }) 
             );
           })}
         </div>
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative", width: "100%", maxWidth: 240 }}>
           <svg style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--color-subtle)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
           <input
             value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search shipments…"
-            style={{ padding: "7px 12px 7px 30px", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border)", fontSize: 13, width: 200, outline: "none", background: "var(--color-surface)", color: "var(--color-heading)", fontFamily: "var(--font-sans)" }}
+            style={{ padding: "7px 12px 7px 30px", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border)", fontSize: 13, width: "100%", outline: "none", background: "var(--color-surface)", color: "var(--color-heading)", fontFamily: "var(--font-sans)", boxSizing: "border-box" }}
           />
         </div>
       </div>
 
-      {/* Table */}
+      {/* List */}
       {filtered.length === 0 ? (
         <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", padding: "64px 24px", textAlign: "center" }}>
           <div style={{ fontSize: 36, marginBottom: 12 }}>📦</div>
@@ -135,61 +136,62 @@ export default function ShipmentsList({ shipments }: { shipments: Shipment[] }) 
             const svc = SERVICE_META[s.serviceType] ?? SERVICE_META["STANDARD"];
             return (
               <Link key={s.id} href={`/shipments/${s.id}`} style={{ textDecoration: "none" }}>
-                <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", padding: "16px 20px", display: "flex", alignItems: "center", gap: 16, transition: "border-color 0.15s, box-shadow 0.15s", cursor: "pointer" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--color-primary-border)"; e.currentTarget.style.boxShadow = "var(--shadow-md)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; e.currentTarget.style.boxShadow = "none"; }}
-                >
-                  {/* Status dot */}
-                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: STATUS_META[s.status]?.dot ?? "var(--color-subtle)", flexShrink: 0 }} />
-
-                  {/* Tracking + date */}
-                  <div style={{ minWidth: 180, flexShrink: 0 }}>
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--color-primary)", fontWeight: 700, marginBottom: 2 }}>{s.trackingNumber}</div>
-                    <div style={{ fontSize: 11, color: "var(--color-subtle)" }}>{fmtDate(s.createdAt)}</div>
-                  </div>
-
-                  {/* Route */}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-heading)" }}>
-                      {s.origin.city}, {s.origin.state}
-                      <span style={{ color: "var(--color-border)", margin: "0 8px" }}>&#8594;</span>
-                      {s.destination.city}, {s.destination.state}
+                <div className="shipment-card" style={{
+                  background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)",
+                  padding: "16px 20px", transition: "border-color 0.15s, box-shadow 0.15s", cursor: "pointer",
+                }}>
+                  {/* Top row: tracking # + status (always visible, never clipped) */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: STATUS_META[s.status]?.dot ?? "var(--color-subtle)", flexShrink: 0 }} />
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--color-primary)", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {s.trackingNumber}
+                      </span>
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--color-subtle)", marginTop: 2 }}>
-                      {s.weightKg} kg
-                      {s.estimatedDelivery && ` · Est. ${fmtDate(s.estimatedDelivery)}`}
-                      {s.deliveredAt && ` · Delivered ${fmtDate(s.deliveredAt)}`}
-                    </div>
-                  </div>
-
-                  {/* Service badge */}
-                  <span style={{ fontSize: 11, fontWeight: 700, color: svc.color, background: svc.bg, padding: "3px 8px", borderRadius: "var(--radius-sm)", flexShrink: 0 }}>
-                    {svc.label}
-                  </span>
-
-                  {/* Invoice */}
-                  {s.invoice && (
-                    <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: "var(--color-heading)" }}>${s.invoice.total.toFixed(2)}</div>
-                      <div style={{ fontSize: 10, color: s.invoice.status === "PAID" ? "var(--status-delivered-text)" : "var(--status-pending-text)", fontWeight: 600, marginTop: 1 }}>{s.invoice.status}</div>
-                    </div>
-                  )}
-
-                  {/* Status */}
-                  <div style={{ flexShrink: 0 }}>
                     <StatusBadge status={s.status} />
                   </div>
 
-                  {/* Chevron */}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                    <polyline points="9,18 15,12 9,6"/>
-                  </svg>
+                  {/* Route */}
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-heading)", marginBottom: 4, lineHeight: 1.4 }}>
+                    {s.origin.city}, {s.origin.state}
+                    <span style={{ color: "var(--color-border)", margin: "0 8px" }}>&#8594;</span>
+                    {s.destination.city}, {s.destination.state}
+                  </div>
+
+                  {/* Meta line: date / weight / est. delivery */}
+                  <div style={{ fontSize: 11, color: "var(--color-subtle)", marginBottom: 12 }}>
+                    {fmtDate(s.createdAt)} · {s.weightKg} kg
+                    {s.estimatedDelivery && ` · Est. ${fmtDate(s.estimatedDelivery)}`}
+                    {s.deliveredAt && ` · Delivered ${fmtDate(s.deliveredAt)}`}
+                  </div>
+
+                  {/* Bottom row: service badge + invoice, wraps freely */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: svc.color, background: svc.bg, padding: "3px 8px", borderRadius: "var(--radius-sm)" }}>
+                      {svc.label}
+                    </span>
+                    {s.invoice && (
+                      <div style={{ textAlign: "right" }}>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: "var(--color-heading)" }}>${s.invoice.total.toFixed(2)}</span>
+                        <span style={{ fontSize: 10, color: s.invoice.status === "PAID" ? "var(--status-delivered-text)" : "var(--status-pending-text)", fontWeight: 600, marginLeft: 6 }}>
+                          {s.invoice.status}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </Link>
             );
           })}
         </div>
       )}
+
+      <style jsx>{`
+        .shipment-card:hover { border-color: var(--color-primary-border); box-shadow: var(--shadow-md); }
+        @media (max-width: 480px) {
+          .shipments-page { padding: 20px 16px !important; }
+        }
+      `}</style>
     </div>
   );
-    }
+}
