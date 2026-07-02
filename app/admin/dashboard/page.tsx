@@ -60,11 +60,31 @@ interface ShipmentListItem {
   _count: { trackingEvents: number; parcels: number };
 }
 
-interface ShipmentDetail extends Omit<ShipmentListItem, "origin" | "destination"> {
+interface InvoiceInfo {
+  id: string;
+  amount: number;
+  tax: number;
+  total: number;
+  status: "DRAFT" | "SENT" | "PAID" | "OVERDUE" | "VOID";
+  dueDate: string | null;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+interface ShipmentDetail extends Omit<ShipmentListItem, "origin" | "destination" | "invoice"> {
   origin: AddressFull;
   destination: AddressFull;
   trackingEvents: TrackingEvent[];
+  invoice: InvoiceInfo | null;
 }
+
+const INVOICE_STATUS_META: Record<InvoiceInfo["status"], { label: string; color: string; bg: string }> = {
+  DRAFT:   { label: "Draft",   color: "#667085", bg: "#F2F4F7" },
+  SENT:    { label: "Sent",    color: "#1D4ED8", bg: "#DBEAFE" },
+  PAID:    { label: "Paid",    color: "#15803D", bg: "#DCFCE7" },
+  OVERDUE: { label: "Overdue", color: "#B91C1C", bg: "#FEE2E2" },
+  VOID:    { label: "Void",    color: "#374151", bg: "#F3F4F6" },
+};
 
 const STATUS_META: Record<ShipmentStatus, { label: string; color: string; bg: string; dot: string }> = {
   PENDING:          { label: "Pending",           color: "#B45309", bg: "#FEF3C7", dot: "#F59E0B" },
@@ -153,6 +173,10 @@ export default function AdminDashboard() {
   const [locLoading, setLocLoading] = useState(false);
   const [locError, setLocError] = useState("");
 
+  const [invoiceForm, setInvoiceForm] = useState({ amount: "", tax: "", dueDate: "" });
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceError, setInvoiceError] = useState("");
+
   // Debounce search input
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 350);
@@ -231,6 +255,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (drawer) fetchShipmentDetail(drawer);
     else setDrawerDetail(null);
+    setInvoiceForm({ amount: "", tax: "", dueDate: "" });
+    setInvoiceError("");
   }, [drawer, fetchShipmentDetail]);
 
   const refreshAll = async (id?: string) => {
@@ -296,6 +322,43 @@ export default function AdminDashboard() {
       setLocError(e.message ?? "Failed to update.");
     } finally {
       setLocLoading(false);
+    }
+  };
+
+  const createInvoice = async (id: string) => {
+    const amount = parseFloat(invoiceForm.amount);
+    if (isNaN(amount) || amount < 0) {
+      setInvoiceError("Enter a valid amount");
+      return;
+    }
+    const tax = invoiceForm.tax ? parseFloat(invoiceForm.tax) : 0;
+    if (isNaN(tax) || tax < 0) {
+      setInvoiceError("Enter a valid tax amount");
+      return;
+    }
+
+    setInvoiceLoading(true);
+    setInvoiceError("");
+    try {
+      const res = await fetch(`/api/admin/shipments/${id}/invoice`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount,
+          tax,
+          dueDate: invoiceForm.dueDate || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Failed to create invoice");
+
+      setInvoiceForm({ amount: "", tax: "", dueDate: "" });
+      await fetchShipmentDetail(id);
+      await fetchShipments();
+    } catch (e: any) {
+      setInvoiceError(e.message ?? "Failed to create invoice");
+    } finally {
+      setInvoiceLoading(false);
     }
   };
 
@@ -675,6 +738,87 @@ export default function AdminDashboard() {
                       <div style={{ fontSize: 13, color: "#374151", background: "#F8F9FB", borderRadius: 8, padding: "10px 12px" }}>{drawerDetail.description}</div>
                     </div>
                   )}
+
+                  {/* Invoice */}
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 8 }}>Invoice</div>
+
+                    {drawerDetail.invoice ? (
+                      <div style={{ background: "#F8F9FB", borderRadius: 10, padding: "14px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                          <span style={{
+                            fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20,
+                            color: INVOICE_STATUS_META[drawerDetail.invoice.status].color,
+                            background: INVOICE_STATUS_META[drawerDetail.invoice.status].bg,
+                          }}>
+                            {INVOICE_STATUS_META[drawerDetail.invoice.status].label}
+                          </span>
+                          <span style={{ fontSize: 17, fontWeight: 800, color: "#101828", letterSpacing: "-0.02em" }}>
+                            ${drawerDetail.invoice.total.toFixed(2)}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 12, color: "#667085", display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                          <span>Subtotal</span><span>${drawerDetail.invoice.amount.toFixed(2)}</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: "#667085", display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                          <span>Tax</span><span>${drawerDetail.invoice.tax.toFixed(2)}</span>
+                        </div>
+                        {drawerDetail.invoice.dueDate && (
+                          <div style={{ fontSize: 12, color: "#667085", display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                            <span>Due</span><span>{fmtDate(drawerDetail.invoice.dueDate)}</span>
+                          </div>
+                        )}
+                        {drawerDetail.invoice.paidAt && (
+                          <div style={{ fontSize: 12, color: "#15803D", display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                            <span>Paid</span><span>{fmtDate(drawerDetail.invoice.paidAt)}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{ background: "#F8F9FB", borderRadius: 10, padding: "14px 16px" }}>
+                        <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 12 }}>No invoice yet for this shipment.</div>
+
+                        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                          <input
+                            type="number" min="0" step="0.01"
+                            value={invoiceForm.amount}
+                            onChange={(e) => setInvoiceForm((f) => ({ ...f, amount: e.target.value }))}
+                            placeholder="Amount"
+                            style={{ flex: 1, padding: "8px 11px", borderRadius: 8, border: "1.5px solid #E4E7EC", fontSize: 13, outline: "none", fontFamily: "inherit" }}
+                          />
+                          <input
+                            type="number" min="0" step="0.01"
+                            value={invoiceForm.tax}
+                            onChange={(e) => setInvoiceForm((f) => ({ ...f, tax: e.target.value }))}
+                            placeholder="Tax (optional)"
+                            style={{ flex: 1, padding: "8px 11px", borderRadius: 8, border: "1.5px solid #E4E7EC", fontSize: 13, outline: "none", fontFamily: "inherit" }}
+                          />
+                        </div>
+                        <input
+                          type="date"
+                          value={invoiceForm.dueDate}
+                          onChange={(e) => setInvoiceForm((f) => ({ ...f, dueDate: e.target.value }))}
+                          style={{ width: "100%", padding: "8px 11px", borderRadius: 8, border: "1.5px solid #E4E7EC", fontSize: 13, outline: "none", fontFamily: "inherit", marginBottom: 10, color: "#101828" }}
+                        />
+
+                        {invoiceError && (
+                          <div style={{ fontSize: 12, color: "#B91C1C", marginBottom: 10 }}>{invoiceError}</div>
+                        )}
+
+                        <button
+                          onClick={() => createInvoice(drawerDetail.id)}
+                          disabled={invoiceLoading}
+                          style={{
+                            width: "100%", padding: "9px", borderRadius: 8, border: "none",
+                            fontSize: 13, fontWeight: 700, cursor: invoiceLoading ? "not-allowed" : "pointer",
+                            background: invoiceLoading ? "#93C5FD" : "#2563EB", color: "#fff",
+                          }}
+                        >
+                          {invoiceLoading ? "Creating…" : "Create Invoice"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Tracking Timeline */}
                   <div>
