@@ -371,13 +371,13 @@ export default function AdminDashboard() {
     <div style={{ fontFamily: "'Inter', system-ui, sans-serif", minHeight: "100vh", background: "#F8F9FB", color: "#101828" }}>
 
       {/* NAV */}
-      <nav style={{
+      <nav className="admin-nav" style={{
         background: "#fff", borderBottom: "1px solid #E4E7EC",
         padding: "0 28px", height: 54,
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        position: "sticky", top: 0, zIndex: 50,
+        position: "sticky", top: 0, zIndex: 50, gap: 12, flexWrap: "wrap",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           <div style={{ width: 28, height: 28, background: "#2563EB", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
@@ -388,28 +388,29 @@ export default function AdminDashboard() {
           <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: "-0.03em" }}>SwiftShip</span>
           <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", marginLeft: 2 }}>Admin</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="admin-nav-actions" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
           <a href="/admin/users" style={{
             fontSize: 12, fontWeight: 600, color: "#374151", textDecoration: "none",
             padding: "6px 12px", borderRadius: 7, border: "1px solid #E4E7EC", background: "#F8F9FB",
+            whiteSpace: "nowrap", flexShrink: 0,
           }}>
             Users
           </a>
-          <div style={{ position: "relative" }}>
+          <div className="admin-search" style={{ position: "relative", minWidth: 0 }}>
             <svg style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
             <input
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search shipments or customers…"
-              style={{ padding: "7px 12px 7px 30px", borderRadius: 8, border: "1px solid #E4E7EC", fontSize: 13, width: 230, outline: "none", background: "#F8F9FB", color: "#101828" }}
+              style={{ padding: "7px 12px 7px 30px", borderRadius: 8, border: "1px solid #E4E7EC", fontSize: 13, width: "100%", outline: "none", background: "#F8F9FB", color: "#101828", boxSizing: "border-box" }}
             />
           </div>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#2563EB", fontSize: 13 }}>A</div>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#2563EB", fontSize: 13, flexShrink: 0 }}>A</div>
         </div>
       </nav>
 
-      <div style={{ padding: "28px 28px", maxWidth: 1280, margin: "0 auto" }}>
+      <div className="admin-main" style={{ padding: "28px 28px", maxWidth: 1280, margin: "0 auto" }}>
 
         {/* HEADING */}
         <div style={{ marginBottom: 22 }}>
@@ -426,7 +427,7 @@ export default function AdminDashboard() {
         )}
 
         {/* STAT CARDS */}
-        <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+        <div className="admin-stat-grid" style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
           <StatCard label="Awaiting Action" value={pending}         sub="Need confirmation"  accent="#B45309" />
           <StatCard label="In Transit"      value={inTransit}       sub="Active deliveries"  accent="#0369A1" />
           <StatCard label="Delivered"       value={delivered}       sub="Completed"          accent="#15803D" />
@@ -454,10 +455,10 @@ export default function AdminDashboard() {
           })}
         </div>
 
-        {/* TABLE */}
-        <div style={{ background: "#fff", border: "1px solid #E4E7EC", borderRadius: 12, overflow: "hidden" }}>
+        {/* SHIPMENTS: table on desktop, stacked cards on mobile */}
+        <div className="admin-shipments-table" style={{ background: "#fff", border: "1px solid #E4E7EC", borderRadius: 12, overflow: "hidden" }}>
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid #E4E7EC" }}>
                   {["Tracking #", "Customer", "Route", "Service", "Weight", "Status", "Courier", ""].map((h, i) => (
@@ -635,6 +636,80 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* MOBILE CARDS — shown instead of the table below 760px */}
+        <div className="admin-shipments-cards" style={{ display: "none", flexDirection: "column", gap: 10 }}>
+          {loading && (
+            <div style={{ background: "#fff", border: "1px solid #E4E7EC", borderRadius: 12, padding: 40, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>Loading shipments…</div>
+          )}
+          {!loading && shipments.length === 0 && (
+            <div style={{ background: "#fff", border: "1px solid #E4E7EC", borderRadius: 12, padding: 40, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>No shipments match your filters.</div>
+          )}
+          {!loading && shipments.map((s) => {
+            const isDrawerOpen = drawer === s.id;
+            return (
+              <div key={s.id} style={{ background: "#fff", border: "1px solid #E4E7EC", borderRadius: 12, padding: "14px 16px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+                  <span
+                    onClick={() => setDrawer(isDrawerOpen ? null : s.id)}
+                    style={{ fontFamily: "monospace", fontSize: 12, color: "#2563EB", fontWeight: 700, cursor: "pointer", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  >
+                    {s.trackingNumber}
+                  </span>
+                  <StatusBadge status={s.status} />
+                </div>
+
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{s.customer.name}</div>
+                <div style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 10 }}>{s.customer.email}</div>
+
+                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
+                  {s.origin.city}, {s.origin.state}
+                  <span style={{ color: "#D1D5DB", margin: "0 8px" }}>→</span>
+                  {s.destination.city}, {s.destination.state}
+                </div>
+                <div style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 12 }}>
+                  {fmtDate(s.createdAt)} · {s.weightKg} kg
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: SERVICE_META[s.serviceType].color, background: SERVICE_META[s.serviceType].bg, padding: "3px 8px", borderRadius: 6 }}>
+                    {SERVICE_META[s.serviceType].label}
+                  </span>
+                  <span style={{
+                    padding: "5px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                    background: s.courier ? "#F0FDF4" : "#FFF7ED",
+                    color: s.courier ? "#15803D" : "#C2410C",
+                    border: `1px solid ${s.courier ? "#BBF7D0" : "#FED7AA"}`,
+                  }}>
+                    {s.courier?.name ?? "Unassigned"}
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  <button onClick={() => {
+                    setLocForm({ status: s.status, location: "", note: "" });
+                    setLocError("");
+                    setLocationModal(s.id);
+                    setDrawer(null);
+                  }} style={{
+                    flex: 1, padding: "8px", fontSize: 12, fontWeight: 600, borderRadius: 7, cursor: "pointer",
+                    background: "#FEF3C7", color: "#B45309", border: "1px solid #FDE68A",
+                  }}>
+                    Update
+                  </button>
+                  <button onClick={() => setDrawer(isDrawerOpen ? null : s.id)} style={{
+                    flex: 1, padding: "8px", fontSize: 12, fontWeight: 600, borderRadius: 7, cursor: "pointer",
+                    background: isDrawerOpen ? "#EFF6FF" : "#F8F9FB",
+                    color: isDrawerOpen ? "#2563EB" : "#374151",
+                    border: `1px solid ${isDrawerOpen ? "#BFDBFE" : "#E4E7EC"}`,
+                  }}>
+                    {isDrawerOpen ? "Close" : "View"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* PAGINATION */}
@@ -950,6 +1025,21 @@ export default function AdminDashboard() {
           </div>
         );
       })()}
+
+      <style jsx>{`
+        @media (max-width: 760px) {
+          .admin-shipments-table { display: none; }
+          .admin-shipments-cards { display: flex !important; }
+          .admin-stat-grid { flex-wrap: wrap; }
+          .admin-stat-grid > div { flex: 1 1 calc(50% - 6px); min-width: calc(50% - 6px); }
+          .admin-search { width: 100%; flex: 1 1 100%; order: 3; }
+          .admin-nav { height: auto; padding: 10px 16px; }
+          .admin-main { padding: 16px !important; }
+        }
+        @media (min-width: 761px) {
+          .admin-search { width: 230px; }
+        }
+      `}</style>
     </div>
   );
 }
