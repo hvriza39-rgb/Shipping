@@ -63,8 +63,8 @@ function fmtTime(d: string) {
 function StatusBadge({ status }: { status: string }) {
   const m = STATUS_META[status] ?? STATUS_META["PENDING"];
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: "var(--radius-xl)", fontSize: 12, fontWeight: 600, color: m.color, background: m.bg }}>
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: m.dot }} />
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: "var(--radius-xl)", fontSize: 12, fontWeight: 600, color: m.color, background: m.bg, whiteSpace: "nowrap" }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: m.dot, flexShrink: 0 }} />
       {m.label}
     </span>
   );
@@ -80,7 +80,7 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
 
 function CardHeader({ title, action }: { title: string; action?: React.ReactNode }) {
   return (
-    <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--color-border-light)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--color-border-light)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
       <div style={{ fontSize: 12, fontWeight: 700, color: "var(--color-subtle)", letterSpacing: "0.07em", textTransform: "uppercase" }}>{title}</div>
       {action}
     </div>
@@ -89,8 +89,8 @@ function CardHeader({ title, action }: { title: string; action?: React.ReactNode
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "9px 0", borderBottom: "1px solid var(--color-border-light)" }}>
-      <span style={{ fontSize: 12, color: "var(--color-muted)", fontWeight: 500, flexShrink: 0, marginRight: 12 }}>{label}</span>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, padding: "9px 0", borderBottom: "1px solid var(--color-border-light)" }}>
+      <span style={{ fontSize: 12, color: "var(--color-muted)", fontWeight: 500, flexShrink: 0 }}>{label}</span>
       <span style={{ fontSize: 13, color: "var(--color-heading)", fontWeight: 600, textAlign: "right" }}>{value ?? "—"}</span>
     </div>
   );
@@ -120,26 +120,26 @@ export default function ShipmentDetail({ shipment }: { shipment: Shipment }) {
   const svc = SERVICE_META[shipment.serviceType] ?? SERVICE_META["STANDARD"];
 
   return (
-    <div style={{ padding: "32px 36px", maxWidth: 1100, margin: "0 auto", fontFamily: "var(--font-sans)" }}>
+    <div className="shipment-detail-page" style={{ padding: "32px 36px", maxWidth: 1100, margin: "0 auto", fontFamily: "var(--font-sans)" }}>
 
       {/* Page header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <Link href="/shipments" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--color-muted)", textDecoration: "none" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0, flexWrap: "wrap" }}>
+          <Link href="/shipments" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--color-muted)", textDecoration: "none", flexShrink: 0 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15,18 9,12 15,6"/>
             </svg>
             Shipments
           </Link>
-          <span style={{ color: "var(--color-border)", fontSize: 16 }}>/</span>
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--color-primary)", fontWeight: 700 }}>{shipment.trackingNumber}</span>
+          <span style={{ color: "var(--color-border)", fontSize: 16, flexShrink: 0 }}>/</span>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--color-primary)", fontWeight: 700, overflowWrap: "anywhere" }}>{shipment.trackingNumber}</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <StatusBadge status={shipment.status} />
           <Link
             href={`/receipt/${shipment.id}`}
             target="_blank"
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: "var(--radius-sm)", border: "1.5px solid var(--color-border)", background: "var(--color-surface)", fontSize: 12, fontWeight: 600, color: "var(--color-body)", textDecoration: "none" }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: "var(--radius-sm)", border: "1.5px solid var(--color-border)", background: "var(--color-surface)", fontSize: 12, fontWeight: 600, color: "var(--color-body)", textDecoration: "none", whiteSpace: "nowrap" }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6,9 6,2 18,2 18,9"/><path d="M6,18H4a2,2,0,0,1-2-2V11a2,2,0,0,1,2-2H20a2,2,0,0,1,2,2v5a2,2,0,0,1-2,2H18"/>
@@ -155,34 +155,34 @@ export default function ShipmentDetail({ shipment }: { shipment: Shipment }) {
         <BookedBanner trackingNumber={shipment.trackingNumber} />
       </Suspense>
 
-      {/* Main grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20, alignItems: "start" }}>
+      {/* Main grid — collapses to a single column under 900px via CSS below */}
+      <div className="detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20, alignItems: "start" }}>
 
         {/* LEFT COLUMN */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, minWidth: 0 }}>
 
           {/* Route card */}
           <Card>
             <CardHeader title="Route" />
-            <div style={{ padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <div style={{ flex: 1 }}>
+            <div className="route-body" style={{ padding: "20px" }}>
+              <div className="route-row" style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: "var(--color-subtle)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 4 }}>From</div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: "var(--color-ink)", letterSpacing: "-0.02em" }}>{shipment.origin.city}</div>
                   <div style={{ fontSize: 13, color: "var(--color-muted)" }}>{shipment.origin.state}, {shipment.origin.country}</div>
                 </div>
 
-                <div style={{ flex: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                <div className="route-mid" style={{ flex: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 90 }}>
                   <div style={{ fontSize: 20 }}>✈</div>
                   <div style={{ width: "100%", height: 2, background: "var(--color-border-light)", position: "relative" }}>
                     <div style={{ position: "absolute", inset: 0, background: `linear-gradient(90deg, var(--color-primary) ${shipment.status === "DELIVERED" ? "100%" : shipment.status === "IN_TRANSIT" ? "60%" : shipment.status === "OUT_FOR_DELIVERY" ? "85%" : shipment.status === "PICKED_UP" ? "40%" : shipment.status === "CONFIRMED" ? "20%" : "5%"}, var(--color-border-light) 0%)` }} />
                   </div>
-                  <div style={{ fontSize: 11, color: "var(--color-subtle)", fontWeight: 500 }}>
+                  <div style={{ fontSize: 11, color: "var(--color-subtle)", fontWeight: 500, textAlign: "center" }}>
                     {shipment.estimatedDelivery ? `Est. ${fmtDate(shipment.estimatedDelivery)}` : "No estimate yet"}
                   </div>
                 </div>
 
-                <div style={{ flex: 1, textAlign: "right" }}>
+                <div style={{ flex: 1, textAlign: "right", minWidth: 0 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: "var(--color-subtle)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 4 }}>To</div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: "var(--color-ink)", letterSpacing: "-0.02em" }}>{shipment.destination.city}</div>
                   <div style={{ fontSize: 13, color: "var(--color-muted)" }}>{shipment.destination.state}, {shipment.destination.country}</div>
@@ -207,7 +207,7 @@ export default function ShipmentDetail({ shipment }: { shipment: Shipment }) {
                         <div style={{ width: 10, height: 10, borderRadius: "50%", background: latest ? m.dot : "var(--color-border)", marginTop: 3, flexShrink: 0 }} />
                         {i < arr.length - 1 && <div style={{ width: 2, flex: 1, minHeight: 20, background: "var(--color-border-light)" }} />}
                       </div>
-                      <div style={{ paddingBottom: 18, flex: 1 }}>
+                      <div style={{ paddingBottom: 18, flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: latest ? m.color : "var(--color-heading)" }}>{m.label}</div>
                         {evt.location && <div style={{ fontSize: 12, color: "var(--color-muted)", marginTop: 2 }}>{evt.location}</div>}
                         {evt.note     && <div style={{ fontSize: 12, color: "var(--color-subtle)", marginTop: 2 }}>{evt.note}</div>}
@@ -236,7 +236,7 @@ export default function ShipmentDetail({ shipment }: { shipment: Shipment }) {
           </Card>
 
           {/* Addresses */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="address-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {[
               { title: "Origin Address",      addr: shipment.origin },
               { title: "Destination Address", addr: shipment.destination },
@@ -258,7 +258,7 @@ export default function ShipmentDetail({ shipment }: { shipment: Shipment }) {
         </div>
 
         {/* RIGHT COLUMN */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
 
           {/* Shipment info */}
           <Card>
@@ -366,6 +366,19 @@ export default function ShipmentDetail({ shipment }: { shipment: Shipment }) {
 
         </div>
       </div>
+
+      <style jsx>{`
+        @media (max-width: 900px) {
+          .detail-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 600px) {
+          .shipment-detail-page { padding: 20px 16px !important; }
+          .route-row { flex-direction: column !important; align-items: stretch !important; gap: 14px !important; }
+          .route-row > div:first-child, .route-row > div:last-child { text-align: left !important; }
+          .route-mid { flex-direction: row !important; min-width: 0 !important; }
+          .address-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }
