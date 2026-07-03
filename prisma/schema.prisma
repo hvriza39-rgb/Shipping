@@ -38,6 +38,7 @@ model User {
 model Address {
   id        String   @id @default(cuid())
   userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
   fullName  String
   phone     String
   line1     String
@@ -47,7 +48,6 @@ model Address {
   zip       String
   country   String   @default("US")
   
-  // ← CHANGE THESE:
   shipmentOrigin      Shipment? @relation("OriginAddress")
   shipmentDestination Shipment? @relation("DestinationAddress")
   
@@ -76,15 +76,15 @@ enum ServiceType {
 }
 
 model Shipment {
-  id              String          @id @default(cuid())
+id              String          @id @default(cuid())
   trackingNumber  String          @unique @default(cuid())
   customerId      String
   courierId       String?         // null until assigned
   status          ShipmentStatus  @default(PENDING)
   serviceType     ServiceType     @default(STANDARD)
 
-  originId        String
-  destinationId   String
+  originId        String          @unique
+  destinationId   String          @unique
 
   // Package details
   weightKg        Float
