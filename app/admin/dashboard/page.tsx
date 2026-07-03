@@ -895,6 +895,59 @@ export default function AdminDashboard() {
                     )}
                   </div>
 
+                  {/* Quote (for PENDING shipments) */}
+                  {drawerDetail.status === "PENDING" && (
+                    <div style={{ marginBottom: 20 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 8 }}>Quote</div>
+                      <div style={{ background: "#FFF7ED", border: "1px solid #FED7AA", borderRadius: 10, padding: "14px 16px" }}>
+                        <div style={{ fontSize: 12, color: "#B45309", fontWeight: 600, marginBottom: 10 }}>Set quoted price for this shipment</div>
+                        <input
+                          type="number" min="0" step="0.01"
+                          value={invoiceForm.amount}
+                          onChange={(e) => setInvoiceForm((f) => ({ ...f, amount: e.target.value }))}
+                          placeholder="Quoted price (USD)"
+                          style={{ width: "100%", padding: "8px 11px", borderRadius: 8, border: "1.5px solid #FED7AA", fontSize: 13, outline: "none", fontFamily: "inherit", marginBottom: 8, color: "#101828" }}
+                        />
+                        <button
+                          onClick={async () => {
+                            const price = parseFloat(invoiceForm.amount);
+                            if (isNaN(price) || price < 0) {
+                              setInvoiceError("Enter a valid price");
+                              return;
+                            }
+                            setInvoiceLoading(true);
+                            setInvoiceError("");
+                            try {
+                              const res = await fetch(`/api/admin/shipments/${drawerDetail.id}/quote`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ quotedPrice: price, finalPrice: price }),
+                              });
+                              const data = await res.json().catch(() => ({}));
+                              if (!res.ok) throw new Error(data.error ?? "Failed to set quote");
+                              setInvoiceForm({ amount: "", tax: "", dueDate: "" });
+                              await fetchShipmentDetail(drawerDetail.id);
+                              await fetchShipments();
+                            } catch (e: any) {
+                              setInvoiceError(e.message ?? "Failed to set quote");
+                            } finally {
+                              setInvoiceLoading(false);
+                            }
+                          }}
+                          disabled={invoiceLoading}
+                          style={{
+                            width: "100%", padding: "8px", borderRadius: 8, border: "none",
+                            fontSize: 12, fontWeight: 700, cursor: invoiceLoading ? "not-allowed" : "pointer",
+                            background: invoiceLoading ? "#FEC89A" : "#B45309", color: "#fff",
+                          }}
+                        >
+                          {invoiceLoading ? "Setting…" : "Set Quote"}
+                        </button>
+                        {invoiceError && <div style={{ fontSize: 11, color: "#B91C1C", marginTop: 8 }}>{invoiceError}</div>}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Tracking Timeline */}
                   <div>
                     <div style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 14 }}>Tracking History</div>
