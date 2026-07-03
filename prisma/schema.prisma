@@ -36,7 +36,6 @@ model User {
 // ─── ADDRESS ────────────────────────────────────────────
 
 model Address {
-
   id        String   @id @default(cuid())
   userId    String?
   fullName  String
@@ -46,10 +45,12 @@ model Address {
   city      String
   state     String
   zip       String
-  country   String   @default("US")  // ← ADD THIS LINE
+  country   String   @default("US")
   
-  shipmentOrigin      Shipment? @relation("origin")
-  shipmentDestination Shipment? @relation("destination")
+  // ← CHANGE THESE:
+  shipmentOrigin      Shipment? @relation("OriginAddress")
+  shipmentDestination Shipment? @relation("DestinationAddress")
+  
   createdAt DateTime  @default(now())
 }
 
