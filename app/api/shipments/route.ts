@@ -40,53 +40,51 @@ export async function POST(req: NextRequest) {
   try {
     const shipment = await prisma.shipment.create({
       data: {
-    const shipment = await prisma.shipment.create({
-  data: {
-    customer: { connect: { id: session.user.id } },
-    trackingNumber: await generateTrackingNumber(),
-    status: "PENDING",
-    serviceType,
-    weightKg: parseFloat(weightKg),
-    lengthCm: lengthCm ? parseFloat(lengthCm) : null,
-    widthCm: widthCm ? parseFloat(widthCm) : null,
-    heightCm: heightCm ? parseFloat(heightCm) : null,
-    description,
-    declaredValue: declaredValue ? parseFloat(declaredValue) : null,
-    notes: notes || null,
-    estimatedDelivery: estimatedDelivery ? new Date(estimatedDelivery) : null,
-    origin: {
-      create: {
-        fullName: origin.fullName,
-        phone: origin.phone,
-        line1: origin.line1,
-        line2: origin.line2 || null,
-        city: origin.city,
-        state: origin.state,
-        zip: origin.zip,
-        country: origin.country,
-      },
-    },
-    destination: {
-      create: {
-        fullName: destination.fullName,
-        phone: destination.phone,
-        line1: destination.line1,
-        line2: destination.line2 || null,
-        city: destination.city,
-        state: destination.state,
-        zip: destination.zip,
-        country: destination.country,
-      },
-    },
-    trackingEvents: {
-      create: {
+        customer: { connect: { id: session.user.id } },
+        trackingNumber: await generateTrackingNumber(),
         status: "PENDING",
-        note: "Shipment created and awaiting admin review and quote",
+        serviceType,
+        weightKg: parseFloat(weightKg),
+        lengthCm: lengthCm ? parseFloat(lengthCm) : null,
+        widthCm: widthCm ? parseFloat(widthCm) : null,
+        heightCm: heightCm ? parseFloat(heightCm) : null,
+        description,
+        declaredValue: declaredValue ? parseFloat(declaredValue) : null,
+        notes: notes || null,
+        estimatedDelivery: estimatedDelivery ? new Date(estimatedDelivery) : null,
+        origin: {
+          create: {
+            fullName: origin.fullName,
+            phone: origin.phone,
+            line1: origin.line1,
+            line2: origin.line2 || null,
+            city: origin.city,
+            state: origin.state,
+            zip: origin.zip,
+            country: origin.country,
+          },
+        },
+        destination: {
+          create: {
+            fullName: destination.fullName,
+            phone: destination.phone,
+            line1: destination.line1,
+            line2: destination.line2 || null,
+            city: destination.city,
+            state: destination.state,
+            zip: destination.zip,
+            country: destination.country,
+          },
+        },
+        trackingEvents: {
+          create: {
+            status: "PENDING",
+            note: "Shipment created and awaiting admin review and quote",
+          },
+        },
       },
-    },
-  },
-  include: { origin: true, destination: true },
-});
+      include: { origin: true, destination: true },
+    });
 
     return NextResponse.json(shipment, { status: 201 });
   } catch (error: any) {
