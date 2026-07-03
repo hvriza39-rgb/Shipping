@@ -25,6 +25,7 @@ interface PackageDetails {
   description: string;
   declaredValue: string;
   notes: string;
+  estimatedDeliveryDate: string;
 }
 
 const EMPTY_ADDRESS: Address = {
@@ -35,14 +36,14 @@ const EMPTY_ADDRESS: Address = {
 const EMPTY_PACKAGE: PackageDetails = {
   serviceType: "STANDARD",
   weightKg: "", lengthCm: "", widthCm: "", heightCm: "",
-  description: "", declaredValue: "", notes: "",
+  description: "", declaredValue: "", notes: "", estimatedDeliveryDate: "",
 };
 
 const SERVICE_OPTIONS = [
-  { value: "STANDARD",  label: "Standard",  desc: "3–7 business days",   price: "From $8.99"  },
-  { value: "EXPRESS",   label: "Express",   desc: "1–3 business days",   price: "From $19.99" },
-  { value: "OVERNIGHT", label: "Overnight", desc: "Next business day",   price: "From $39.99" },
-  { value: "FREIGHT",   label: "Freight",   desc: "Large / heavy items", price: "From $79.99" },
+  { value: "STANDARD",  label: "Standard",  desc: "3–7 business days" },
+  { value: "EXPRESS",   label: "Express",   desc: "1–3 business days" },
+  { value: "OVERNIGHT", label: "Overnight", desc: "Next business day" },
+  { value: "FREIGHT",   label: "Freight",   desc: "Large / heavy items" },
 ];
 
 const US_STATES = [
@@ -50,6 +51,29 @@ const US_STATES = [
   "IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV",
   "NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN",
   "TX","UT","VT","VA","WA","WV","WI","WY","DC",
+];
+
+const COUNTRIES = [
+  { code: "US", name: "United States" },
+  { code: "CA", name: "Canada" },
+  { code: "MX", name: "Mexico" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "DE", name: "Germany" },
+  { code: "FR", name: "France" },
+  { code: "IT", name: "Italy" },
+  { code: "ES", name: "Spain" },
+  { code: "AU", name: "Australia" },
+  { code: "JP", name: "Japan" },
+  { code: "CN", name: "China" },
+  { code: "IN", name: "India" },
+  { code: "BR", name: "Brazil" },
+  { code: "NZ", name: "New Zealand" },
+  { code: "SG", name: "Singapore" },
+  { code: "HK", name: "Hong Kong" },
+  { code: "KR", name: "South Korea" },
+  { code: "NL", name: "Netherlands" },
+  { code: "ZA", name: "South Africa" },
+  { code: "AE", name: "United Arab Emirates" },
 ];
 
 // ─── Shared styles ────────────────────────────────────
@@ -112,10 +136,21 @@ function AddressForm({ title, address, onChange }: {
   title: string; address: Address; onChange: (a: Address) => void;
 }) {
   const set = (field: keyof Address) => (val: string) => onChange({ ...address, [field]: val });
+  const isUS = address.country === "US";
+
   return (
     <div>
       <h2 style={{ fontSize: 18, fontWeight: 800, color: "#0C1421", letterSpacing: "-0.03em", margin: "0 0 4px" }}>{title}</h2>
       <p style={{ fontSize: 13, color: "#9CA3AF", margin: "0 0 24px" }}>Enter the {title.toLowerCase()} details.</p>
+
+      {/* Country */}
+      <Select
+        label="Country"
+        value={address.country}
+        onChange={set("country")}
+        options={COUNTRIES.map((c) => ({ value: c.code, label: c.name }))}
+        required
+      />
 
       <div style={row}>
         <div style={{ flex: 1 }}>
@@ -133,19 +168,25 @@ function AddressForm({ title, address, onChange }: {
         <div style={{ flex: 2 }}>
           <Field label="City" value={address.city} onChange={set("city")} placeholder="New York" required />
         </div>
+        {isUS ? (
+          <div style={{ flex: 1 }}>
+            <Field label="State" required>
+              <select
+                value={address.state} onChange={(e) => set("state")(e.target.value)} required
+                style={{ ...input, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36, cursor: "pointer" }}
+              >
+                <option value="">State</option>
+                {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </Field>
+          </div>
+        ) : (
+          <div style={{ flex: 1 }}>
+            <Field label="Province/Region" value={address.state} onChange={set("state")} placeholder="e.g. Ontario" required />
+          </div>
+        )}
         <div style={{ flex: 1 }}>
-          <Field label="State" required>
-            <select
-              value={address.state} onChange={(e) => set("state")(e.target.value)} required
-              style={{ ...input, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36, cursor: "pointer" }}
-            >
-              <option value="">State</option>
-              {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </Field>
-        </div>
-        <div style={{ flex: 1 }}>
-          <Field label="ZIP" value={address.zip} onChange={set("zip")} placeholder="10001" required />
+          <Field label={isUS ? "ZIP" : "Postal code"} value={address.zip} onChange={set("zip")} placeholder={isUS ? "10001" : "M5V 3A9"} required />
         </div>
       </div>
     </div>
@@ -154,6 +195,36 @@ function AddressForm({ title, address, onChange }: {
 
 function PackageForm({ pkg, onChange }: { pkg: PackageDetails; onChange: (p: PackageDetails) => void }) {
   const set = (field: keyof PackageDetails) => (val: string) => onChange({ ...pkg, [field]: val });
+
+  // Auto-calculate estimated delivery based on service type
+  const calcEstimate = (serviceType: string): string => {
+    const today = new Date();
+    let daysToAdd = 3; // default
+    switch (serviceType) {
+      case "STANDARD":
+        daysToAdd = 5;
+        break;
+      case "EXPRESS":
+        daysToAdd = 2;
+        break;
+      case "OVERNIGHT":
+        daysToAdd = 1;
+        break;
+      case "FREIGHT":
+        daysToAdd = 7;
+        break;
+    }
+    const date = new Date(today);
+    date.setDate(date.getDate() + daysToAdd);
+    return date.toISOString().split("T")[0];
+  };
+
+  const handleServiceChange = (serviceType: string) => {
+    set("serviceType")(serviceType);
+    // Auto-set estimated delivery when service changes
+    onChange({ ...pkg, serviceType, estimatedDeliveryDate: calcEstimate(serviceType) });
+  };
+
   return (
     <div>
       <h2 style={{ fontSize: 18, fontWeight: 800, color: "#0C1421", letterSpacing: "-0.03em", margin: "0 0 4px" }}>Package Details</h2>
@@ -166,7 +237,7 @@ function PackageForm({ pkg, onChange }: { pkg: PackageDetails; onChange: (p: Pac
           {SERVICE_OPTIONS.map((s) => {
             const active = pkg.serviceType === s.value;
             return (
-              <button key={s.value} type="button" onClick={() => set("serviceType")(s.value)} style={{
+              <button key={s.value} type="button" onClick={() => handleServiceChange(s.value)} style={{
                 padding: "12px 14px", borderRadius: 10, cursor: "pointer", textAlign: "left",
                 border: `1.5px solid ${active ? "#2563EB" : "#E4E7EC"}`,
                 background: active ? "#EFF6FF" : "#fff",
@@ -174,7 +245,6 @@ function PackageForm({ pkg, onChange }: { pkg: PackageDetails; onChange: (p: Pac
               }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: active ? "#2563EB" : "#101828", marginBottom: 2 }}>{s.label}</div>
                 <div style={{ fontSize: 11, color: "#9CA3AF" }}>{s.desc}</div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: active ? "#2563EB" : "#374151", marginTop: 4 }}>{s.price}</div>
               </button>
             );
           })}
@@ -203,6 +273,7 @@ function PackageForm({ pkg, onChange }: { pkg: PackageDetails; onChange: (p: Pac
 
       <Field label="Contents / Description" value={pkg.description} onChange={set("description")} placeholder="e.g. Electronics, clothing, documents…" required />
       <Field label="Declared Value (USD)" value={pkg.declaredValue} onChange={set("declaredValue")} placeholder="e.g. 200" type="number" />
+      <Field label="Estimated Delivery Date" value={pkg.estimatedDeliveryDate} onChange={set("estimatedDeliveryDate")} type="date" />
       <Field label="Notes for courier" value={pkg.notes} onChange={set("notes")} placeholder="Fragile, leave at door, etc." />
     </div>
   );
@@ -219,21 +290,25 @@ function ReviewSection({ label: lbl, value }: { label: string; value: string }) 
 
 function ReviewForm({ origin, destination, pkg }: { origin: Address; destination: Address; pkg: PackageDetails }) {
   const service = SERVICE_OPTIONS.find((s) => s.value === pkg.serviceType)!;
+  const originCountry = COUNTRIES.find((c) => c.code === origin.country)?.name || origin.country;
+  const destCountry = COUNTRIES.find((c) => c.code === destination.country)?.name || destination.country;
+
   return (
     <div>
       <h2 style={{ fontSize: 18, fontWeight: 800, color: "#0C1421", letterSpacing: "-0.03em", margin: "0 0 4px" }}>Review & Confirm</h2>
       <p style={{ fontSize: 13, color: "#9CA3AF", margin: "0 0 24px" }}>Double-check everything before submitting.</p>
 
       {[
-        { title: "Origin", addr: origin },
-        { title: "Destination", addr: destination },
-      ].map(({ title, addr }) => (
+        { title: "Origin", addr: origin, country: originCountry },
+        { title: "Destination", addr: destination, country: destCountry },
+      ].map(({ title, addr, country }) => (
         <div key={title} style={{ background: "#F8F9FB", borderRadius: 10, padding: "14px 16px", marginBottom: 14 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 10 }}>{title}</div>
           <ReviewSection label="Name"    value={addr.fullName} />
           <ReviewSection label="Phone"   value={addr.phone} />
           <ReviewSection label="Address" value={[addr.line1, addr.line2].filter(Boolean).join(", ")} />
-          <ReviewSection label="City"    value={`${addr.city}, ${addr.state} ${addr.zip}`} />
+          <ReviewSection label="City"    value={addr.state ? `${addr.city}, ${addr.state} ${addr.zip}` : `${addr.city}, ${addr.zip}`} />
+          <ReviewSection label="Country" value={country} />
         </div>
       ))}
 
@@ -244,15 +319,16 @@ function ReviewForm({ origin, destination, pkg }: { origin: Address; destination
         <ReviewSection label="Dimensions"     value={pkg.lengthCm ? `${pkg.lengthCm} × ${pkg.widthCm} × ${pkg.heightCm} cm` : "—"} />
         <ReviewSection label="Contents"       value={pkg.description} />
         <ReviewSection label="Declared Value" value={pkg.declaredValue ? `$${pkg.declaredValue}` : "—"} />
+        <ReviewSection label="Est. Delivery"  value={pkg.estimatedDeliveryDate ? new Date(pkg.estimatedDeliveryDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"} />
         <ReviewSection label="Notes"          value={pkg.notes} />
       </div>
 
       <div style={{ background: "#EFF6FF", border: "1.5px solid #BFDBFE", borderRadius: 10, padding: "12px 16px" }}>
         <div style={{ fontSize: 13, color: "#1D4ED8", fontWeight: 600 }}>
-          Estimated cost: <span style={{ fontWeight: 800 }}>{service.price}</span>
+          Price to be determined by SwiftShip admin
         </div>
         <div style={{ fontSize: 12, color: "#3B82F6", marginTop: 3 }}>
-          Final price confirmed after courier review.
+          Your shipment will be reviewed and quoted within 24 hours.
         </div>
       </div>
     </div>
@@ -273,7 +349,7 @@ export default function BookShipment() {
   const [error, setError]         = useState("");
 
   const isAddressValid = (a: Address) =>
-    a.fullName && a.phone && a.line1 && a.city && a.state && a.zip;
+    a.fullName && a.phone && a.line1 && a.city && a.state && a.zip && a.country;
 
   const canAdvance = () => {
     if (step === 0) return isAddressValid(origin);
@@ -290,14 +366,15 @@ export default function BookShipment() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          serviceType:   pkg.serviceType,
-          weightKg:      parseFloat(pkg.weightKg),
-          lengthCm:      pkg.lengthCm ? parseFloat(pkg.lengthCm) : null,
-          widthCm:       pkg.widthCm  ? parseFloat(pkg.widthCm)  : null,
-          heightCm:      pkg.heightCm ? parseFloat(pkg.heightCm) : null,
-          description:   pkg.description,
-          declaredValue: pkg.declaredValue ? parseFloat(pkg.declaredValue) : null,
-          notes:         pkg.notes || null,
+          serviceType:       pkg.serviceType,
+          weightKg:          parseFloat(pkg.weightKg),
+          lengthCm:          pkg.lengthCm ? parseFloat(pkg.lengthCm) : null,
+          widthCm:           pkg.widthCm  ? parseFloat(pkg.widthCm)  : null,
+          heightCm:          pkg.heightCm ? parseFloat(pkg.heightCm) : null,
+          description:       pkg.description,
+          declaredValue:     pkg.declaredValue ? parseFloat(pkg.declaredValue) : null,
+          notes:             pkg.notes || null,
+          estimatedDelivery: pkg.estimatedDeliveryDate || null,
           origin,
           destination,
         }),
