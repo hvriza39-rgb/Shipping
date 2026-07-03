@@ -36,7 +36,7 @@ model User {
 // ─── ADDRESS ────────────────────────────────────────────
 
 model Address {
-model Address {
+
   id        String   @id @default(cuid())
   userId    String?
   fullName  String
