@@ -1,156 +1,123 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@root/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
-// GET /api/shipments
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { searchParams } = new URL(req.url);
-  const status = searchParams.get("status") ?? undefined;
-  const page = parseInt(searchParams.get("page") ?? "1");
-  const limit = 20;
-  const skip = (page - 1) * limit;
-
-  const isAdmin = session.user.role === "ADMIN" || session.user.role === "STAFF";
-
-  const where = {
-    ...(isAdmin ? {} : { customerId: session.user.id }),
-    ...(status ? { status: status as any } : {}),
-  };
-
-  const [shipments, total] = await Promise.all([
-    prisma.shipment.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: { createdAt: "desc" },
-      include: {
-        customer: { select: { id: true, name: true, email: true } },
-        courier: { select: { id: true, name: true, email: true } },
-        origin: true,
-        destination: true,
-        invoice: { select: { status: true, total: true } },
-        _count: { select: { trackingEvents: true } },
-      },
-    }),
-    prisma.shipment.count({ where }),
-  ]);
-
-  return NextResponse.json({
-    shipments,
-    total,
-    page,
-    pages: Math.ceil(total / limit),
-  });
-}
-
-// POST /api/shipments
+// POST /api/shipments — create a new shipment (customer)
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
-
   const {
-    serviceType,
-    weightKg,
-    lengthCm,
-    widthCm,
-    heightCm,
-    description,
-    declaredValue,
-    notes,
-    estimatedDelivery,
-    origin,   // address object
-    destination, // address object
-    parcels,  // optional array
-  } = body;
+    serviceType, weightKg, lengthCm, widthCm, heightCm,
+    description, declaredValue, notes, estimatedDelivery,
+    origin, destination,
+  } = await req.json();
 
-  if (!weightKg || !origin || !destination) {
+  // Validate required fields
+  if (!serviceType || !weightKg || !description) {
     return NextResponse.json(
-      { error: "weightKg, origin, and destination are required" },
+      { error: "Missing required fields" },
       { status: 400 }
     );
   }
 
-  // Generate a human-readable tracking number
-  const trackingNumber = `SHP-${Date.now().toString(36).toUpperCase()}-${Math.random()
-    .toString(36)
-    .substring(2, 6)
-    .toUpperCase()}`;
+  if (!origin?.fullName || !origin?.phone || !origin?.line1 || !origin?.city || !origin?.state || !origin?.zip || !origin?.country) {
+    return NextResponse.json(
+      { error: "Invalid origin address" },
+      { status: 400 }
+    );
+  }
 
-  const shipment = await prisma.shipment.create({
-    data: {
-      trackingNumber,
-      customer: { connect: { id: session.user.id } },
-      serviceType: serviceType ?? "STANDARD",
-      weightKg,
-      lengthCm,
-      widthCm,
-      heightCm,
-      description,
-      declaredValue,
-      notes,
-      estimatedDelivery: estimatedDelivery ? new Date(estimatedDelivery) : null,
+  if (!destination?.fullName || !destination?.phone || !destination?.line1 || !destination?.city || !destination?.state || !destination?.zip || !destination?.country) {
+    return NextResponse.json(
+      { error: "Invalid destination address" },
+      { status: 400 }
+    );
+  }
 
-      origin: {
-        create: {
-          userId: session.user.id,
-          fullName: origin.fullName,
-          phone: origin.phone,
-          line1: origin.line1,
-          line2: origin.line2,
-          city: origin.city,
-          state: origin.state,
-          zip: origin.zip,
-          country: origin.country ?? "US",
+  try {
+    const shipment = await prisma.shipment.create({
+      data: {
+        customerId: session.user.id,
+        trackingNumber: await generateTrackingNumber(),
+        status: "PENDING", // Admin will review and quote
+        serviceType,
+        weightKg: parseFloat(weightKg),
+        lengthCm: lengthCm ? parseFloat(lengthCm) : null,
+        widthCm: widthCm ? parseFloat(widthCm) : null,
+        heightCm: heightCm ? parseFloat(heightCm) : null,
+        description,
+        declaredValue: declaredValue ? parseFloat(declaredValue) : null,
+        notes: notes || null,
+        estimatedDelivery: estimatedDelivery ? new Date(estimatedDelivery) : null,
+        quotedPrice: null, // To be set by admin
+        finalPrice: null,  // To be set by admin
+        origin: {
+          create: {
+            fullName: origin.fullName,
+            phone: origin.phone,
+            line1: origin.line1,
+            line2: origin.line2 || null,
+            city: origin.city,
+            state: origin.state,
+            zip: origin.zip,
+            country: origin.country,
+          },
+        },
+        destination: {
+          create: {
+            fullName: destination.fullName,
+            phone: destination.phone,
+            line1: destination.line1,
+            line2: destination.line2 || null,
+            city: destination.city,
+            state: destination.state,
+            zip: destination.zip,
+            country: destination.country,
+          },
+        },
+        trackingEvents: {
+          create: {
+            status: "PENDING",
+            note: "Shipment created and awaiting admin review and quote",
+          },
         },
       },
-      destination: {
-        create: {
-          fullName: destination.fullName,
-          phone: destination.phone,
-          line1: destination.line1,
-          line2: destination.line2,
-          city: destination.city,
-          state: destination.state,
-          zip: destination.zip,
-          country: destination.country ?? "US",
-        },
+      include: {
+        origin: true,
+        destination: true,
       },
+    });
 
-      parcels: parcels?.length
-        ? {
-            create: parcels.map((p: any) => ({
-              label: p.label,
-              weightKg: p.weightKg,
-              lengthCm: p.lengthCm,
-              widthCm: p.widthCm,
-              heightCm: p.heightCm,
-              contents: p.contents,
-            })),
-          }
-        : undefined,
+    return NextResponse.json(shipment, { status: 201 });
+  } catch (error: any) {
+    console.error("Shipment creation error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to create shipment" },
+      { status: 500 }
+    );
+  }
+}
 
-      trackingEvents: {
-        create: {
-          status: "PENDING",
-          note: "Shipment created and awaiting confirmation",
-        },
-      },
-    },
-    include: {
-      origin: true,
-      destination: true,
-      parcels: true,
-      trackingEvents: true,
-    },
-  });
-  return NextResponse.json(shipment, { status: 201 });
-    }
+// ─── Helper: generate unique tracking number ───────
+
+async function generateTrackingNumber(): Promise<string> {
+  let attempts = 0;
+  while (attempts < 10) {
+    const segment1 = "SHP";
+    const segment2 = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const segment3 = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const candidate = `${segment1}-${segment2}-${segment3}`;
+
+    const existing = await prisma.shipment.findUnique({
+      where: { trackingNumber: candidate },
+    });
+
+    if (!existing) return candidate;
+    attempts++;
+  }
+
+  throw new Error("Failed to generate unique tracking number");
+}
