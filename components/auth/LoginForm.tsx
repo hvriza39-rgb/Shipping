@@ -5,36 +5,18 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-// Display: a serif with a little warmth (e.g. Fraunces) — set this as --font-display in your root layout.
-const DISPLAY = "var(--font-display), Georgia, 'Times New Roman', serif";
-// Body: a clean, quiet sans (e.g. Inter) — set as --font-body.
-const BODY    = "var(--font-body), system-ui, sans-serif";
-// Mono: kept from the manifest/waybill motif (e.g. IBM Plex Mono) — set as --font-mono.
-const MONO    = "var(--font-mono), 'Courier New', monospace";
-
-const INK       = "#14181C";
-const INK_SOFT  = "#6B7280";
-const INK_FAINT = "#9CA3AF";
-const ACCENT    = "#2C6E78"; // route teal — the one accent color
-const LINE      = "#E4E4E1";
-const PAPER     = "#FFFFFF";
-const STAMP     = "#B23A2E"; // reserved for errors only
-const LEDGER    = "#3F7D5C"; // reserved for the verified banner only
-
 function RegisteredBanner() {
   const searchParams = useSearchParams();
   if (!searchParams.get("registered")) return null;
   return (
     <div style={styles.banner}>
-      <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: 11, letterSpacing: "0.06em", color: LEDGER }}>
-        VERIFIED
-      </span>
-      <span style={{ color: INK_SOFT }}>Account created. Sign in to continue.</span>
+      <span style={styles.bannerLabel}>VERIFIED</span>
+      <span style={{ color: "var(--color-muted)" }}>Account created. Sign in to continue.</span>
     </div>
   );
 }
 
-// A quiet nod to the shipping motif — one line, one dot, no chrome.
+// Quiet nod to the shipping motif — a route line with a single position marker.
 function RouteLine() {
   return (
     <div style={styles.routeWrap} aria-hidden="true">
@@ -76,8 +58,8 @@ export default function LoginForm() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.container}>
-        <div style={styles.logo}>
+      <div style={styles.card}>
+        <div className="h-title" style={styles.logo}>
           <div style={styles.logoMark}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
@@ -88,20 +70,22 @@ export default function LoginForm() {
           <span style={styles.logoText}>SwiftShip</span>
         </div>
 
-        <RouteLine />
+        <div className="h-sub">
+          <RouteLine />
+        </div>
 
-        <div style={styles.eyebrow}>Manifest No. 004&ndash;B &nbsp;/&nbsp; Sign In</div>
-        <h1 style={styles.heading}>Welcome back.</h1>
-        <p style={styles.sub}>
+        <div className="h-sub" style={styles.eyebrow}>Manifest No. 004&ndash;B &nbsp;/&nbsp; Sign In</div>
+        <h1 className="h-title" style={styles.heading}>Welcome back.</h1>
+        <p className="h-sub" style={styles.sub}>
           New here?{" "}
-          <Link href="/register" style={styles.link}>Create an account</Link>
+          <Link href="/register" className="foot-link" style={styles.link}>Create an account</Link>
         </p>
 
         <Suspense fallback={null}>
           <RegisteredBanner />
         </Suspense>
 
-        <form onSubmit={handleSubmit} style={styles.fields}>
+        <form onSubmit={handleSubmit} className="h-cta" style={styles.fields}>
           <div style={styles.field}>
             <label style={styles.label} htmlFor="email">Email address</label>
             <input
@@ -111,16 +95,17 @@ export default function LoginForm() {
               onChange={e => setEmail(e.target.value)}
               required
               placeholder="you@example.com"
+              className="tracker-input"
               style={styles.input}
-              onFocus={e => (e.currentTarget.style.borderBottomColor = ACCENT)}
-              onBlur={e => (e.currentTarget.style.borderBottomColor = LINE)}
+              onFocus={e => (e.currentTarget.style.borderColor = "var(--color-accent-teal)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "var(--color-border)")}
             />
           </div>
 
           <div style={styles.field}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <label style={styles.label} htmlFor="password">Password</label>
-              <Link href="/forgot-password" style={{ ...styles.link, fontSize: 12 }}>Forgot?</Link>
+              <Link href="/forgot-password" className="foot-link" style={{ ...styles.link, fontSize: 12 }}>Forgot?</Link>
             </div>
             <input
               id="password"
@@ -129,21 +114,23 @@ export default function LoginForm() {
               onChange={e => setPassword(e.target.value)}
               required
               placeholder="••••••••"
+              className="tracker-input"
               style={styles.input}
-              onFocus={e => (e.currentTarget.style.borderBottomColor = ACCENT)}
-              onBlur={e => (e.currentTarget.style.borderBottomColor = LINE)}
+              onFocus={e => (e.currentTarget.style.borderColor = "var(--color-accent-teal)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "var(--color-border)")}
             />
           </div>
 
           {error && (
             <div style={styles.error}>
-              <span style={{ fontFamily: MONO, fontWeight: 700 }}>Error &mdash;</span> {error}
+              <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>Error &mdash;</span> {error}
             </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
+            className="btn-p"
             style={loading ? { ...styles.button, ...styles.buttonDisabled } : styles.button}
           >
             {loading ? "Signing in…" : "Sign in"}
@@ -160,91 +147,103 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: PAPER,
-    fontFamily: BODY,
+    background: "var(--color-bg)",
+    fontFamily: "var(--font-sans)",
     padding: "48px 24px",
   },
-  container: {
+  card: {
     width: "100%",
-    maxWidth: 380,
+    maxWidth: 420,
+    background: "var(--color-surface)",
+    border: "1px solid var(--color-border-light)",
+    borderRadius: "var(--radius-lg)",
+    boxShadow: "var(--shadow-lg)",
+    padding: "40px 36px 36px",
   },
   logo: {
-    display: "flex", alignItems: "center", gap: 9, marginBottom: 40,
+    display: "flex", alignItems: "center", gap: 9, marginBottom: 36,
   },
   logoMark: {
-    width: 22, height: 22, background: INK,
-    borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center",
+    width: 22, height: 22, background: "var(--color-ink)",
+    borderRadius: "var(--radius-sm)", display: "flex", alignItems: "center", justifyContent: "center",
     flexShrink: 0,
   },
   logoText: {
-    color: INK, fontFamily: MONO, fontWeight: 700, fontSize: 13,
+    color: "var(--color-ink)", fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 13,
     letterSpacing: "0.04em", textTransform: "uppercase",
   },
   routeWrap: {
-    marginBottom: 28,
+    marginBottom: 26,
   },
   routeTrack: {
     position: "relative",
     height: 1,
-    background: LINE,
+    background: "var(--color-border)",
     marginBottom: 8,
   },
   routeDot: {
     position: "absolute",
     top: "50%", left: "62%",
     width: 6, height: 6, borderRadius: "50%",
-    background: ACCENT,
+    background: "var(--status-transit-dot)",
     transform: "translate(-50%, -50%)",
   },
   routeCaption: {
-    fontFamily: MONO, fontSize: 10, letterSpacing: "0.08em",
-    color: INK_FAINT, textTransform: "uppercase",
+    fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.08em",
+    color: "var(--color-subtle)", textTransform: "uppercase",
   },
   eyebrow: {
-    fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "0.08em",
-    textTransform: "uppercase", color: ACCENT, marginBottom: 14,
+    fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em",
+    textTransform: "uppercase", color: "var(--color-accent-teal)", marginBottom: 14,
   },
   heading: {
-    fontFamily: DISPLAY, fontSize: 34, fontWeight: 500, letterSpacing: "-0.01em",
-    color: INK, margin: "0 0 10px", lineHeight: 1.1,
+    fontFamily: "var(--font-display)", fontSize: 32, fontWeight: 600, letterSpacing: "-0.01em",
+    color: "var(--color-heading)", margin: "0 0 10px", lineHeight: 1.12,
   },
   sub: {
-    fontFamily: BODY, fontSize: 14, color: INK_SOFT, margin: "0 0 36px",
+    fontFamily: "var(--font-sans)", fontSize: 14, color: "var(--color-muted)", margin: "0 0 32px",
   },
   banner: {
     display: "flex", alignItems: "baseline", gap: 8,
-    fontSize: 13, marginBottom: 24, paddingBottom: 16,
-    borderBottom: `1px solid ${LINE}`,
+    fontSize: 13, marginBottom: 24, padding: "10px 14px",
+    background: "var(--color-success-bg)",
+    border: "1px solid var(--color-success-border)",
+    borderRadius: "var(--radius-sm)",
+  },
+  bannerLabel: {
+    fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 11, letterSpacing: "0.06em",
+    color: "var(--color-success-text)",
   },
   fields: {
-    display: "flex", flexDirection: "column", gap: 24,
+    display: "flex", flexDirection: "column", gap: 20,
   },
   field: {
-    display: "flex", flexDirection: "column", gap: 8,
+    display: "flex", flexDirection: "column", gap: 7,
   },
   label: {
-    fontFamily: MONO, fontSize: 10, fontWeight: 600, letterSpacing: "0.08em",
-    textTransform: "uppercase", color: INK_SOFT,
+    fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em",
+    textTransform: "uppercase", color: "var(--color-muted)",
   },
   input: {
-    padding: "8px 2px", borderRadius: 0,
-    border: "none", borderBottom: `1px solid ${LINE}`, fontSize: 15, fontFamily: BODY,
-    color: INK, outline: "none", background: "transparent",
+    padding: "11px 13px", borderRadius: "var(--radius-sm)",
+    border: "1px solid var(--color-border)", fontSize: 15, fontFamily: "var(--font-sans)",
+    color: "var(--color-ink)", outline: "none", background: "var(--color-surface)",
     transition: "border-color 0.15s",
   },
   error: {
-    fontSize: 13, fontFamily: BODY, color: STAMP,
+    fontSize: 13, fontFamily: "var(--font-sans)", color: "var(--color-error-text)",
+    background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)",
+    borderRadius: "var(--radius-sm)", padding: "10px 13px",
   },
   button: {
-    padding: "13px", background: INK, color: "#fff",
-    border: "none", borderRadius: 3, fontSize: 14, fontWeight: 600, fontFamily: BODY,
-    cursor: "pointer", marginTop: 8, letterSpacing: "0.01em",
-    transition: "opacity 0.15s",
+    padding: "13px", background: "var(--color-primary)", color: "#fff",
+    border: "none", borderRadius: "var(--radius-sm)", fontSize: 14, fontWeight: 600,
+    fontFamily: "var(--font-sans)", cursor: "pointer", marginTop: 6, letterSpacing: "0.01em",
   },
   buttonDisabled: {
     opacity: 0.5, cursor: "not-allowed",
   },
   link: {
-    color: ACCENT, fontWeight: 600, textDecoration: "none",
+    color: "var(--color-accent-teal)", fontWeight: 600, textDecoration: "none",
   },
 };
