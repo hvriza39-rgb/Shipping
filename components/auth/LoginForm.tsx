@@ -74,7 +74,7 @@ export default function LoginForm() {
           <RouteLine />
         </div>
 
-        <div className="h-sub" style={styles.eyebrow}>Manifest No. 004&ndash;B &nbsp;/&nbsp; Sign In</div>
+        <div className="h-sub" style={styles.eyebrow}> Sign In</div>
         <h1 className="h-title" style={styles.heading}>Welcome back.</h1>
         <p className="h-sub" style={styles.sub}>
           New here?{" "}
