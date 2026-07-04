@@ -46,6 +46,16 @@ const SERVICE_OPTIONS = [
   { value: "FREIGHT",   label: "Freight",   desc: "Large / heavy items" },
 ];
 
+// Maps each service option to its own token pair, so the picker doesn't
+// flatten every option to one brand color — matches the tokens already
+// defined for service badges elsewhere in the app.
+const SERVICE_COLORS: Record<string, { text: string; bg: string }> = {
+  STANDARD:  { text: "var(--service-standard-text)",  bg: "var(--service-standard-bg)" },
+  EXPRESS:   { text: "var(--service-express-text)",   bg: "var(--service-express-bg)" },
+  OVERNIGHT: { text: "var(--service-overnight-text)", bg: "var(--service-overnight-bg)" },
+  FREIGHT:   { text: "var(--service-freight-text)",   bg: "var(--service-freight-bg)" },
+};
+
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN",
   "IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV",
@@ -79,14 +89,25 @@ const COUNTRIES = [
 // ─── Shared styles ────────────────────────────────────
 
 const input: React.CSSProperties = {
-  width: "100%", padding: "10px 13px", borderRadius: 8,
-  border: "1.5px solid #E4E7EC", fontSize: 14, color: "#101828",
-  outline: "none", background: "#fff", fontFamily: "inherit",
+  width: "100%", padding: "10px 13px", borderRadius: "var(--radius-sm)",
+  border: "1px solid var(--color-border)", fontSize: 14, color: "var(--color-ink)",
+  outline: "none", background: "var(--color-surface)", fontFamily: "var(--font-sans)",
+  transition: "border-color 0.15s",
 };
-const inputFocus: React.CSSProperties = { ...input, border: "1.5px solid #2563EB" };
-const label: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 };
+const inputFocus: React.CSSProperties = { ...input, border: "1px solid var(--color-accent-teal)" };
+const label: React.CSSProperties = {
+  fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em",
+  textTransform: "uppercase", color: "var(--color-muted)", display: "block", marginBottom: 7,
+};
 const fieldWrap: React.CSSProperties = { display: "flex", flexDirection: "column", marginBottom: 16 };
 const row: React.CSSProperties = { display: "flex", gap: 14 };
+const sectionHeading: React.CSSProperties = {
+  fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 600, letterSpacing: "-0.01em",
+  color: "var(--color-heading)", margin: "0 0 4px",
+};
+const sectionSub: React.CSSProperties = {
+  fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--color-subtle)", margin: "0 0 24px",
+};
 
 function Field({
   label: lbl, value, onChange, placeholder, type = "text", required = false, children,
@@ -98,7 +119,7 @@ function Field({
   const [focused, setFocused] = useState(false);
   return (
     <div style={fieldWrap}>
-      <label style={label}>{lbl}{required && <span style={{ color: "#EF4444", marginLeft: 2 }}>*</span>}</label>
+      <label style={label}>{lbl}{required && <span style={{ color: "var(--color-error-text)", marginLeft: 2 }}>*</span>}</label>
       {children ?? (
         <input
           type={type} value={value} required={required}
@@ -119,10 +140,10 @@ function Select({ label: lbl, value, onChange, options, required }: {
 }) {
   return (
     <div style={fieldWrap}>
-      <label style={label}>{lbl}{required && <span style={{ color: "#EF4444", marginLeft: 2 }}>*</span>}</label>
+      <label style={label}>{lbl}{required && <span style={{ color: "var(--color-error-text)", marginLeft: 2 }}>*</span>}</label>
       <select
         value={value} onChange={(e) => onChange(e.target.value)} required={required}
-        style={{ ...input, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36, cursor: "pointer" }}
+        style={{ ...input, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23828C99' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36, cursor: "pointer" }}
       >
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -140,10 +161,9 @@ function AddressForm({ title, address, onChange }: {
 
   return (
     <div>
-      <h2 style={{ fontSize: 18, fontWeight: 800, color: "#0C1421", letterSpacing: "-0.03em", margin: "0 0 4px" }}>{title}</h2>
-      <p style={{ fontSize: 13, color: "#9CA3AF", margin: "0 0 24px" }}>Enter the {title.toLowerCase()} details.</p>
+      <h2 style={sectionHeading}>{title}</h2>
+      <p style={sectionSub}>Enter the {title.toLowerCase()} details.</p>
 
-      {/* Country */}
       <Select
         label="Country"
         value={address.country}
@@ -173,7 +193,7 @@ function AddressForm({ title, address, onChange }: {
             <Field label="State" required>
               <select
                 value={address.state} onChange={(e) => set("state")(e.target.value)} required
-                style={{ ...input, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36, cursor: "pointer" }}
+                style={{ ...input, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23828C99' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36, cursor: "pointer" }}
               >
                 <option value="">State</option>
                 {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -196,23 +216,14 @@ function AddressForm({ title, address, onChange }: {
 function PackageForm({ pkg, onChange }: { pkg: PackageDetails; onChange: (p: PackageDetails) => void }) {
   const set = (field: keyof PackageDetails) => (val: string) => onChange({ ...pkg, [field]: val });
 
-  // Auto-calculate estimated delivery based on service type
   const calcEstimate = (serviceType: string): string => {
     const today = new Date();
-    let daysToAdd = 3; // default
+    let daysToAdd = 3;
     switch (serviceType) {
-      case "STANDARD":
-        daysToAdd = 5;
-        break;
-      case "EXPRESS":
-        daysToAdd = 2;
-        break;
-      case "OVERNIGHT":
-        daysToAdd = 1;
-        break;
-      case "FREIGHT":
-        daysToAdd = 7;
-        break;
+      case "STANDARD":  daysToAdd = 5; break;
+      case "EXPRESS":   daysToAdd = 2; break;
+      case "OVERNIGHT": daysToAdd = 1; break;
+      case "FREIGHT":   daysToAdd = 7; break;
     }
     const date = new Date(today);
     date.setDate(date.getDate() + daysToAdd);
@@ -221,42 +232,39 @@ function PackageForm({ pkg, onChange }: { pkg: PackageDetails; onChange: (p: Pac
 
   const handleServiceChange = (serviceType: string) => {
     set("serviceType")(serviceType);
-    // Auto-set estimated delivery when service changes
     onChange({ ...pkg, serviceType, estimatedDeliveryDate: calcEstimate(serviceType) });
   };
 
   return (
     <div>
-      <h2 style={{ fontSize: 18, fontWeight: 800, color: "#0C1421", letterSpacing: "-0.03em", margin: "0 0 4px" }}>Package Details</h2>
-      <p style={{ fontSize: 13, color: "#9CA3AF", margin: "0 0 24px" }}>Tell us about what you're shipping.</p>
+      <h2 style={sectionHeading}>Package Details</h2>
+      <p style={sectionSub}>Tell us about what you're shipping.</p>
 
-      {/* Service type */}
       <div style={{ marginBottom: 20 }}>
-        <label style={label}>Service Type<span style={{ color: "#EF4444", marginLeft: 2 }}>*</span></label>
+        <label style={label}>Service Type<span style={{ color: "var(--color-error-text)", marginLeft: 2 }}>*</span></label>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {SERVICE_OPTIONS.map((s) => {
             const active = pkg.serviceType === s.value;
+            const colors = SERVICE_COLORS[s.value];
             return (
               <button key={s.value} type="button" onClick={() => handleServiceChange(s.value)} style={{
-                padding: "12px 14px", borderRadius: 10, cursor: "pointer", textAlign: "left",
-                border: `1.5px solid ${active ? "#2563EB" : "#E4E7EC"}`,
-                background: active ? "#EFF6FF" : "#fff",
+                padding: "12px 14px", borderRadius: "var(--radius-md)", cursor: "pointer", textAlign: "left",
+                border: `1.5px solid ${active ? colors.text : "var(--color-border)"}`,
+                background: active ? colors.bg : "var(--color-surface)",
                 transition: "border-color 0.12s, background 0.12s",
               }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: active ? "#2563EB" : "#101828", marginBottom: 2 }}>{s.label}</div>
-                <div style={{ fontSize: 11, color: "#9CA3AF" }}>{s.desc}</div>
+                <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 700, color: active ? colors.text : "var(--color-ink)", marginBottom: 2 }}>{s.label}</div>
+                <div style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: active ? colors.text : "var(--color-subtle)" }}>{s.desc}</div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Weight */}
       <Field label="Weight (kg)" value={pkg.weightKg} onChange={set("weightKg")} placeholder="e.g. 2.5" type="number" required />
 
-      {/* Dimensions */}
       <div style={{ marginBottom: 16 }}>
-        <label style={label}>Dimensions (cm) <span style={{ color: "#9CA3AF", fontWeight: 400 }}>— optional</span></label>
+        <label style={label}>Dimensions (cm) <span style={{ color: "var(--color-placeholder)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>— optional</span></label>
         <div style={row}>
           {(["lengthCm", "widthCm", "heightCm"] as const).map((dim) => (
             <div key={dim} style={{ flex: 1 }}>
@@ -281,9 +289,9 @@ function PackageForm({ pkg, onChange }: { pkg: PackageDetails; onChange: (p: Pac
 
 function ReviewSection({ label: lbl, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "9px 0", borderBottom: "1px solid #F2F4F7" }}>
-      <span style={{ fontSize: 13, color: "#667085", fontWeight: 500 }}>{lbl}</span>
-      <span style={{ fontSize: 13, color: "#101828", fontWeight: 600, textAlign: "right", maxWidth: "60%" }}>{value || "—"}</span>
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "9px 0", borderBottom: "1px solid var(--color-border-light)" }}>
+      <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--color-muted)", fontWeight: 500 }}>{lbl}</span>
+      <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--color-ink)", fontWeight: 600, textAlign: "right", maxWidth: "60%" }}>{value || "—"}</span>
     </div>
   );
 }
@@ -293,17 +301,26 @@ function ReviewForm({ origin, destination, pkg }: { origin: Address; destination
   const originCountry = COUNTRIES.find((c) => c.code === origin.country)?.name || origin.country;
   const destCountry = COUNTRIES.find((c) => c.code === destination.country)?.name || destination.country;
 
+  const cardBox: React.CSSProperties = {
+    background: "var(--color-surface-alt)", borderRadius: "var(--radius-md)",
+    padding: "14px 16px", marginBottom: 14,
+  };
+  const cardLabel: React.CSSProperties = {
+    fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "var(--color-subtle)",
+    letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 10,
+  };
+
   return (
     <div>
-      <h2 style={{ fontSize: 18, fontWeight: 800, color: "#0C1421", letterSpacing: "-0.03em", margin: "0 0 4px" }}>Review & Confirm</h2>
-      <p style={{ fontSize: 13, color: "#9CA3AF", margin: "0 0 24px" }}>Double-check everything before submitting.</p>
+      <h2 style={sectionHeading}>Review &amp; Confirm</h2>
+      <p style={sectionSub}>Double-check everything before submitting.</p>
 
       {[
         { title: "Origin", addr: origin, country: originCountry },
         { title: "Destination", addr: destination, country: destCountry },
       ].map(({ title, addr, country }) => (
-        <div key={title} style={{ background: "#F8F9FB", borderRadius: 10, padding: "14px 16px", marginBottom: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 10 }}>{title}</div>
+        <div key={title} style={cardBox}>
+          <div style={cardLabel}>{title}</div>
           <ReviewSection label="Name"    value={addr.fullName} />
           <ReviewSection label="Phone"   value={addr.phone} />
           <ReviewSection label="Address" value={[addr.line1, addr.line2].filter(Boolean).join(", ")} />
@@ -312,8 +329,8 @@ function ReviewForm({ origin, destination, pkg }: { origin: Address; destination
         </div>
       ))}
 
-      <div style={{ background: "#F8F9FB", borderRadius: 10, padding: "14px 16px", marginBottom: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 10 }}>Package</div>
+      <div style={cardBox}>
+        <div style={cardLabel}>Package</div>
         <ReviewSection label="Service"        value={`${service.label} — ${service.desc}`} />
         <ReviewSection label="Weight"         value={`${pkg.weightKg} kg`} />
         <ReviewSection label="Dimensions"     value={pkg.lengthCm ? `${pkg.lengthCm} × ${pkg.widthCm} × ${pkg.heightCm} cm` : "—"} />
@@ -323,11 +340,11 @@ function ReviewForm({ origin, destination, pkg }: { origin: Address; destination
         <ReviewSection label="Notes"          value={pkg.notes} />
       </div>
 
-      <div style={{ background: "#EFF6FF", border: "1.5px solid #BFDBFE", borderRadius: 10, padding: "12px 16px" }}>
-        <div style={{ fontSize: 13, color: "#1D4ED8", fontWeight: 600 }}>
+      <div style={{ background: "var(--color-info-bg)", border: "1px solid var(--color-info-border)", borderRadius: "var(--radius-md)", padding: "12px 16px" }}>
+        <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--color-info-text)", fontWeight: 600 }}>
           Price to be determined by SwiftShip admin
         </div>
-        <div style={{ fontSize: 12, color: "#3B82F6", marginTop: 3 }}>
+        <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--color-info-text)", marginTop: 3, opacity: 0.85 }}>
           Your shipment will be reviewed and quoted within 24 hours.
         </div>
       </div>
@@ -389,100 +406,130 @@ export default function BookShipment() {
   };
 
   return (
-    <div style={{ padding: "36px", maxWidth: 680, margin: "0 auto" }}>
+    <div style={{ background: "var(--color-bg)", minHeight: "100vh", padding: "36px 24px" }}>
+      <div style={{ maxWidth: 680, margin: "0 auto" }}>
 
-      {/* Page title */}
-      <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em", color: "#0C1421", margin: "0 0 28px" }}>Book a Shipment</h1>
+        <h1 style={{
+          fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 600, letterSpacing: "-0.01em",
+          color: "var(--color-heading)", margin: "0 0 28px",
+        }}>
+          Book a Shipment
+        </h1>
 
-      {/* Progress */}
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 36 }}>
-        {STEPS.map((s, i) => {
-          const done   = i < step;
-          const active = i === step;
-          return (
-            <div key={s} style={{ display: "flex", alignItems: "center", flex: i < STEPS.length - 1 ? 1 : undefined }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 12, fontWeight: 800,
-                  background: done ? "#2563EB" : active ? "#EFF6FF" : "#F3F4F6",
-                  color: done ? "#fff" : active ? "#2563EB" : "#9CA3AF",
-                  border: active ? "2px solid #2563EB" : "none",
-                  transition: "all 0.2s",
-                }}>
-                  {done ? (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20,6 9,17 4,12"/>
-                    </svg>
-                  ) : i + 1}
+        {/* Progress */}
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 32 }}>
+          {STEPS.map((s, i) => {
+            const done   = i < step;
+            const active = i === step;
+            return (
+              <div key={s} style={{ display: "flex", alignItems: "center", flex: i < STEPS.length - 1 ? 1 : undefined }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
+                    background: done ? "var(--color-primary)" : active ? "var(--color-accent-teal-light)" : "var(--color-surface-alt)",
+                    color: done ? "#fff" : active ? "var(--color-accent-teal)" : "var(--color-subtle)",
+                    border: active ? "2px solid var(--color-accent-teal)" : "none",
+                    transition: "all 0.2s",
+                  }}>
+                    {done ? (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20,6 9,17 4,12"/>
+                      </svg>
+                    ) : i + 1}
+                  </div>
+                  <span style={{
+                    fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.04em", textTransform: "uppercase",
+                    fontWeight: active ? 700 : 500,
+                    color: active ? "var(--color-accent-teal)" : done ? "var(--color-body)" : "var(--color-subtle)",
+                    whiteSpace: "nowrap",
+                  }}>
+                    {s}
+                  </span>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: active ? 700 : 500, color: active ? "#2563EB" : done ? "#374151" : "#9CA3AF", whiteSpace: "nowrap" }}>{s}</span>
+                {i < STEPS.length - 1 && (
+                  <div style={{
+                    flex: 1, height: 2, margin: "0 8px", marginBottom: 18, transition: "background 0.2s",
+                    background: done ? "var(--color-primary)" : "var(--color-border)",
+                  }} />
+                )}
               </div>
-              {i < STEPS.length - 1 && (
-                <div style={{ flex: 1, height: 2, background: done ? "#2563EB" : "#E4E7EC", margin: "0 8px", marginBottom: 18, transition: "background 0.2s" }} />
-              )}
+            );
+          })}
+        </div>
+
+        {/* Step content */}
+        <div style={{
+          background: "var(--color-surface)", border: "1px solid var(--color-border-light)",
+          borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-md)", padding: "28px 28px",
+        }}>
+          {step === 0 && <AddressForm title="Origin Address"      address={origin}      onChange={setOrigin} />}
+          {step === 1 && <AddressForm title="Destination Address" address={destination} onChange={setDest}   />}
+          {step === 2 && <PackageForm pkg={pkg} onChange={setPkg} />}
+          {step === 3 && <ReviewForm origin={origin} destination={destination} pkg={pkg} />}
+
+          {error && (
+            <div style={{
+              background: "var(--color-error-bg)", color: "var(--color-error-text)",
+              border: "1px solid var(--color-error-border)", borderRadius: "var(--radius-sm)",
+              padding: "10px 14px", fontSize: 13, fontWeight: 500, marginTop: 16, fontFamily: "var(--font-sans)",
+            }}>
+              {error}
             </div>
-          );
-        })}
-      </div>
-
-      {/* Step content */}
-      <div style={{ background: "#fff", border: "1px solid #E4E7EC", borderRadius: 14, padding: "28px 28px" }}>
-        {step === 0 && <AddressForm title="Origin Address"      address={origin}      onChange={setOrigin} />}
-        {step === 1 && <AddressForm title="Destination Address" address={destination} onChange={setDest}   />}
-        {step === 2 && <PackageForm pkg={pkg} onChange={setPkg} />}
-        {step === 3 && <ReviewForm origin={origin} destination={destination} pkg={pkg} />}
-
-        {error && (
-          <div style={{ background: "#FEF2F2", color: "#B91C1C", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 14px", fontSize: 13, fontWeight: 500, marginTop: 16 }}>
-            {error}
-          </div>
-        )}
-
-        {/* Navigation */}
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 28, paddingTop: 20, borderTop: "1px solid #F2F4F7" }}>
-          <button
-            type="button"
-            onClick={() => setStep((s) => s - 1)}
-            disabled={step === 0}
-            style={{
-              padding: "10px 20px", borderRadius: 8, border: "1.5px solid #E4E7EC",
-              background: "#fff", fontSize: 13, fontWeight: 600, color: "#374151",
-              cursor: step === 0 ? "not-allowed" : "pointer", opacity: step === 0 ? 0.4 : 1,
-            }}
-          >
-            Back
-          </button>
-
-          {step < 3 ? (
-            <button
-              type="button"
-              onClick={() => setStep((s) => s + 1)}
-              disabled={!canAdvance()}
-              style={{
-                padding: "10px 24px", borderRadius: 8, border: "none",
-                background: canAdvance() ? "#2563EB" : "#93C5FD",
-                color: "#fff", fontSize: 13, fontWeight: 700,
-                cursor: canAdvance() ? "pointer" : "not-allowed",
-              }}
-            >
-              Continue
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={loading}
-              style={{
-                padding: "10px 28px", borderRadius: 8, border: "none",
-                background: loading ? "#93C5FD" : "#2563EB",
-                color: "#fff", fontSize: 13, fontWeight: 700,
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
-            >
-              {loading ? "Submitting…" : "Confirm Shipment"}
-            </button>
           )}
+
+          {/* Navigation */}
+          <div style={{
+            display: "flex", justifyContent: "space-between", marginTop: 28, paddingTop: 20,
+            borderTop: "1px solid var(--color-border-light)",
+          }}>
+            <button
+              type="button"
+              className="btn-o"
+              onClick={() => setStep((s) => s - 1)}
+              disabled={step === 0}
+              style={{
+                padding: "10px 20px", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border)",
+                background: "var(--color-surface)", fontSize: 13, fontWeight: 600, color: "var(--color-body)",
+                fontFamily: "var(--font-sans)",
+                cursor: step === 0 ? "not-allowed" : "pointer", opacity: step === 0 ? 0.4 : 1,
+              }}
+            >
+              Back
+            </button>
+
+            {step < 3 ? (
+              <button
+                type="button"
+                className="btn-p"
+                onClick={() => setStep((s) => s + 1)}
+                disabled={!canAdvance()}
+                style={{
+                  padding: "10px 24px", borderRadius: "var(--radius-sm)", border: "none",
+                  background: canAdvance() ? "var(--color-primary)" : "var(--color-primary-light)",
+                  color: "#fff", fontSize: 13, fontWeight: 700, fontFamily: "var(--font-sans)",
+                  cursor: canAdvance() ? "pointer" : "not-allowed",
+                }}
+              >
+                Continue
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn-p"
+                onClick={handleSubmit}
+                disabled={loading}
+                style={{
+                  padding: "10px 28px", borderRadius: "var(--radius-sm)", border: "none",
+                  background: loading ? "var(--color-primary-light)" : "var(--color-primary)",
+                  color: "#fff", fontSize: 13, fontWeight: 700, fontFamily: "var(--font-sans)",
+                  cursor: loading ? "not-allowed" : "pointer",
+                }}
+              >
+                {loading ? "Submitting…" : "Confirm Shipment"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
