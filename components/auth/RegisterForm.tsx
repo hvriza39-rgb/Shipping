@@ -4,6 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+// Quiet nod to the shipping motif — matches the login page's route line.
+function RouteLine() {
+  return (
+    <div style={styles.routeWrap} aria-hidden="true">
+      <div style={styles.routeTrack}>
+        <div style={styles.routeDot} />
+      </div>
+      <div style={styles.routeCaption}>NEW ACCOUNT &middot; PENDING</div>
+    </div>
+  );
+}
+
 export default function RegisterForm() {
   const router = useRouter();
   const [form, setForm]       = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
@@ -50,123 +62,238 @@ export default function RegisterForm() {
     router.push("/login?registered=1");
   };
 
-  const inputStyle: React.CSSProperties = {
-    padding: "10px 13px", borderRadius: 8,
-    border: "1.5px solid #E4E7EC", fontSize: 14,
-    color: "#101828", outline: "none", background: "#fff",
-  };
-
-  const focusStyle: React.CSSProperties = { ...inputStyle, border: "1.5px solid #2563EB" };
-
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', system-ui, sans-serif" }}>
-      {/* Left panel */}
-      <div style={{ width: 420, flexShrink: 0, background: "#2563EB", padding: "40px 44px", display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "auto" }}>
-          <div style={{ width: 32, height: 32, background: "rgba(255,255,255,0.15)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <div style={styles.page}>
+      <div style={styles.card}>
+        <div className="h-title" style={styles.logo}>
+          <div style={styles.logoMark}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
               <rect x="9" y="11" width="14" height="10" rx="2"/>
               <circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
             </svg>
           </div>
-          <span style={{ color: "#fff", fontWeight: 800, fontSize: 17, letterSpacing: "-0.03em" }}>SwiftShip</span>
+          <span style={styles.logoText}>SwiftShip</span>
         </div>
 
-        <div style={{ marginBottom: 60 }}>
-          <h2 style={{ color: "#fff", fontSize: 28, fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1.2, margin: "0 0 14px" }}>
-            Ship smarter,<br />track everything.
-          </h2>
-          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, lineHeight: 1.6, margin: 0 }}>
-            Create your free account and start booking shipments in minutes.
-          </p>
+        <div className="h-sub">
+          <RouteLine />
+        </div>
 
-          <div style={{ marginTop: 40, display: "flex", flexDirection: "column", gap: 16 }}>
-            {[
-              { icon: "📦", text: "Book shipments in seconds" },
-              { icon: "📍", text: "Real-time tracking updates" },
-              { icon: "🧾", text: "Digital invoices and history" },
-            ].map(({ icon, text }) => (
-              <div key={text} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ fontSize: 18 }}>{icon}</span>
-                <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 14, fontWeight: 500 }}>{text}</span>
-              </div>
-            ))}
+        <div className="h-sub" style={styles.eyebrow}>New Manifest &nbsp;/&nbsp; Create Account</div>
+        <h1 className="h-title" style={styles.heading}>Get started.</h1>
+        <p className="h-sub" style={styles.sub}>
+          Already have an account?{" "}
+          <Link href="/login" className="foot-link" style={styles.link}>Sign in</Link>
+        </p>
+
+        <form onSubmit={handleSubmit} className="h-cta" style={styles.fields}>
+          <div style={styles.field}>
+            <label style={styles.label} htmlFor="name">Full name</label>
+            <input
+              id="name"
+              value={form.name}
+              onChange={set("name")}
+              required
+              placeholder="Jane Doe"
+              className="tracker-input"
+              style={styles.input}
+              onFocus={e => (e.currentTarget.style.borderColor = "var(--color-accent-teal)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "var(--color-border)")}
+            />
           </div>
-        </div>
-      </div>
 
-      {/* Right panel */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", padding: "40px 24px" }}>
-        <div style={{ width: "100%", maxWidth: 400 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.04em", color: "#101828", margin: "0 0 6px" }}>Create account</h1>
-          <p style={{ fontSize: 14, color: "#667085", margin: "0 0 32px" }}>
-            Already have one?{" "}
-            <Link href="/login" style={{ color: "#2563EB", fontWeight: 600, textDecoration: "none" }}>Sign in</Link>
+          <div style={styles.field}>
+            <label style={styles.label} htmlFor="email">Email address</label>
+            <input
+              id="email"
+              type="email"
+              value={form.email}
+              onChange={set("email")}
+              required
+              placeholder="you@example.com"
+              className="tracker-input"
+              style={styles.input}
+              onFocus={e => (e.currentTarget.style.borderColor = "var(--color-accent-teal)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "var(--color-border)")}
+            />
+          </div>
+
+          <div style={styles.field}>
+            <label style={styles.label} htmlFor="phone">
+              Phone <span style={{ color: "var(--color-placeholder)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              value={form.phone}
+              onChange={set("phone")}
+              placeholder="+1 555-000-0000"
+              className="tracker-input"
+              style={styles.input}
+              onFocus={e => (e.currentTarget.style.borderColor = "var(--color-accent-teal)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "var(--color-border)")}
+            />
+          </div>
+
+          <div style={styles.field}>
+            <label style={styles.label} htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={form.password}
+              onChange={set("password")}
+              required
+              placeholder="Min. 8 characters"
+              className="tracker-input"
+              style={styles.input}
+              onFocus={e => (e.currentTarget.style.borderColor = "var(--color-accent-teal)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "var(--color-border)")}
+            />
+          </div>
+
+          <div style={styles.field}>
+            <label style={styles.label} htmlFor="confirm">Confirm password</label>
+            <input
+              id="confirm"
+              type="password"
+              value={form.confirm}
+              onChange={set("confirm")}
+              required
+              placeholder="••••••••"
+              className="tracker-input"
+              style={styles.input}
+              onFocus={e => (e.currentTarget.style.borderColor = "var(--color-accent-teal)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "var(--color-border)")}
+            />
+          </div>
+
+          {error && (
+            <div style={styles.error}>
+              <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>Error &mdash;</span> {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-p"
+            style={loading ? { ...styles.button, ...styles.buttonDisabled } : styles.button}
+          >
+            {loading ? "Creating account…" : "Create account"}
+          </button>
+
+          <p style={styles.terms}>
+            By registering you agree to our{" "}
+            <Link href="/terms" className="foot-link" style={styles.termsLink}>Terms</Link>
+            {" "}and{" "}
+            <Link href="/privacy" className="foot-link" style={styles.termsLink}>Privacy Policy</Link>.
           </p>
-
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ display: "flex", gap: 12 }}>
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Full name</label>
-                <input value={form.name} onChange={set("name")} required placeholder="Jane Doe" style={inputStyle}
-                  onFocus={e => Object.assign(e.currentTarget.style, focusStyle)}
-                  onBlur={e => Object.assign(e.currentTarget.style, inputStyle)} />
-              </div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Email address</label>
-              <input type="email" value={form.email} onChange={set("email")} required placeholder="you@example.com" style={inputStyle}
-                onFocus={e => Object.assign(e.currentTarget.style, focusStyle)}
-                onBlur={e => Object.assign(e.currentTarget.style, inputStyle)} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Phone <span style={{ color: "#9CA3AF", fontWeight: 400 }}>(optional)</span></label>
-              <input type="tel" value={form.phone} onChange={set("phone")} placeholder="+1 555-000-0000" style={inputStyle}
-                onFocus={e => Object.assign(e.currentTarget.style, focusStyle)}
-                onBlur={e => Object.assign(e.currentTarget.style, inputStyle)} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Password</label>
-              <input type="password" value={form.password} onChange={set("password")} required placeholder="Min. 8 characters" style={inputStyle}
-                onFocus={e => Object.assign(e.currentTarget.style, focusStyle)}
-                onBlur={e => Object.assign(e.currentTarget.style, inputStyle)} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Confirm password</label>
-              <input type="password" value={form.confirm} onChange={set("confirm")} required placeholder="••••••••" style={inputStyle}
-                onFocus={e => Object.assign(e.currentTarget.style, focusStyle)}
-                onBlur={e => Object.assign(e.currentTarget.style, inputStyle)} />
-            </div>
-
-            {error && (
-              <div style={{ background: "#FEF2F2", color: "#B91C1C", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 13px", fontSize: 13, fontWeight: 500 }}>
-                {error}
-              </div>
-            )}
-
-            <button type="submit" disabled={loading} style={{
-              padding: "11px", background: loading ? "#93C5FD" : "#2563EB",
-              color: "#fff", border: "none", borderRadius: 8, fontSize: 14,
-              fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
-              marginTop: 4, letterSpacing: "-0.01em",
-            }}>
-              {loading ? "Creating account…" : "Create account"}
-            </button>
-
-            <p style={{ fontSize: 12, color: "#9CA3AF", textAlign: "center", margin: 0 }}>
-              By registering you agree to our{" "}
-              <Link href="/terms" style={{ color: "#2563EB", textDecoration: "none" }}>Terms</Link>
-              {" "}and{" "}
-              <Link href="/privacy" style={{ color: "#2563EB", textDecoration: "none" }}>Privacy Policy</Link>.
-            </p>
-          </form>
-        </div>
+        </form>
       </div>
     </div>
   );
 }
+
+const styles: Record<string, React.CSSProperties> = {
+  page: {
+    minHeight: "100vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "var(--color-bg)",
+    fontFamily: "var(--font-sans)",
+    padding: "48px 24px",
+  },
+  card: {
+    width: "100%",
+    maxWidth: 440,
+    background: "var(--color-surface)",
+    border: "1px solid var(--color-border-light)",
+    borderRadius: "var(--radius-lg)",
+    boxShadow: "var(--shadow-lg)",
+    padding: "40px 36px 36px",
+  },
+  logo: {
+    display: "flex", alignItems: "center", gap: 9, marginBottom: 36,
+  },
+  logoMark: {
+    width: 22, height: 22, background: "var(--color-ink)",
+    borderRadius: "var(--radius-sm)", display: "flex", alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
+  },
+  logoText: {
+    color: "var(--color-ink)", fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 13,
+    letterSpacing: "0.04em", textTransform: "uppercase",
+  },
+  routeWrap: {
+    marginBottom: 26,
+  },
+  routeTrack: {
+    position: "relative",
+    height: 1,
+    background: "var(--color-border)",
+    marginBottom: 8,
+  },
+  routeDot: {
+    position: "absolute",
+    top: "50%", left: "12%",
+    width: 6, height: 6, borderRadius: "50%",
+    background: "var(--status-pending-dot)",
+    transform: "translate(-50%, -50%)",
+  },
+  routeCaption: {
+    fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.08em",
+    color: "var(--color-subtle)", textTransform: "uppercase",
+  },
+  eyebrow: {
+    fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em",
+    textTransform: "uppercase", color: "var(--color-accent-teal)", marginBottom: 14,
+  },
+  heading: {
+    fontFamily: "var(--font-display)", fontSize: 32, fontWeight: 600, letterSpacing: "-0.01em",
+    color: "var(--color-heading)", margin: "0 0 10px", lineHeight: 1.12,
+  },
+  sub: {
+    fontFamily: "var(--font-sans)", fontSize: 14, color: "var(--color-muted)", margin: "0 0 32px",
+  },
+  fields: {
+    display: "flex", flexDirection: "column", gap: 18,
+  },
+  field: {
+    display: "flex", flexDirection: "column", gap: 7,
+  },
+  label: {
+    fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em",
+    textTransform: "uppercase", color: "var(--color-muted)",
+  },
+  input: {
+    padding: "11px 13px", borderRadius: "var(--radius-sm)",
+    border: "1px solid var(--color-border)", fontSize: 15, fontFamily: "var(--font-sans)",
+    color: "var(--color-ink)", outline: "none", background: "var(--color-surface)",
+    transition: "border-color 0.15s",
+  },
+  error: {
+    fontSize: 13, fontFamily: "var(--font-sans)", color: "var(--color-error-text)",
+    background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)",
+    borderRadius: "var(--radius-sm)", padding: "10px 13px",
+  },
+  button: {
+    padding: "13px", background: "var(--color-primary)", color: "#fff",
+    border: "none", borderRadius: "var(--radius-sm)", fontSize: 14, fontWeight: 600,
+    fontFamily: "var(--font-sans)", cursor: "pointer", marginTop: 6, letterSpacing: "0.01em",
+  },
+  buttonDisabled: {
+    opacity: 0.5, cursor: "not-allowed",
+  },
+  link: {
+    color: "var(--color-accent-teal)", fontWeight: 600, textDecoration: "none",
+  },
+  terms: {
+    fontSize: 12, color: "var(--color-subtle)", textAlign: "center", margin: "4px 0 0",
+    fontFamily: "var(--font-sans)",
+  },
+  termsLink: {
+    color: "var(--color-accent-teal)", textDecoration: "none",
+  },
+};
