@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -73,92 +73,213 @@ interface Props {
 }
 
 export default function UserLayout({ children, user }: Props) {
-  const pathname  = usePathname();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const initials  = user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  const initials = user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => { setOpen(false); }, [pathname]);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "var(--font-inter), system-ui, sans-serif", background: "#F8F9FB" }}>
+    <div style={{ minHeight: "100vh", background: "var(--color-bg)", fontFamily: "var(--font-sans)" }}>
 
-      {/* SIDEBAR */}
-      <aside style={{
-        width: 228, flexShrink: 0, background: "#fff",
-        borderRight: "1px solid #E4E7EC",
-        display: "flex", flexDirection: "column",
-        position: "sticky", top: 0, height: "100vh", overflowY: "auto",
-      }}>
-        {/* Logo */}
-        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid #F2F4F7" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 28, height: 28, background: "#2563EB", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
-                <rect x="9" y="11" width="14" height="10" rx="2"/>
-                <circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-              </svg>
-            </div>
-            <span style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 800, fontSize: 15, color: "#0C1421", letterSpacing: "-0.02em" }}>SwiftShip</span>
-          </div>
-        </div>
-
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: "12px 10px" }}>
-          {NAV.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(item.href + "/");
-            return (
-              <Link key={item.href} href={item.href} style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "9px 12px", borderRadius: 8, marginBottom: 2,
-                textDecoration: "none", fontSize: 13, fontWeight: active ? 700 : 500,
-                color: active ? "#2563EB" : "#374151",
-                background: active ? "#EFF6FF" : "transparent",
-                transition: "background 0.12s, color 0.12s",
-              }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#F8F9FB"; }}
-                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
-              >
-                <span style={{ color: active ? "#2563EB" : "#9CA3AF", flexShrink: 0 }}>{item.icon}</span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* User + logout */}
-        <div style={{ padding: "12px 10px 16px", borderTop: "1px solid #F2F4F7" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8, marginBottom: 4 }}>
-            <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 11, color: "#2563EB", flexShrink: 0 }}>
-              {initials}
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#101828", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name}</div>
-              <div style={{ fontSize: 11, color: "#9CA3AF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.email}</div>
-            </div>
-          </div>
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            style={{
-              width: "100%", display: "flex", alignItems: "center", gap: 10,
-              padding: "9px 12px", borderRadius: 8, border: "none", background: "transparent",
-              fontSize: 13, fontWeight: 500, color: "#EF4444", cursor: "pointer", textAlign: "left",
-              transition: "background 0.12s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#FEF2F2"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/>
+      {/* Mobile top bar — hidden on desktop */}
+      <div className="mobile-topbar">
+        <button aria-label="Open menu" onClick={() => setOpen(true)} style={styles.iconBtn}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={styles.logoMarkSmall}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
+              <rect x="9" y="11" width="14" height="10" rx="2"/>
+              <circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
             </svg>
-            Sign out
-          </button>
+          </div>
+          <span style={styles.logoTextSmall}>SwiftShip</span>
         </div>
-      </aside>
+        <div style={{ width: 20 }} aria-hidden="true" />
+      </div>
 
-      {/* MAIN */}
-      <main style={{ flex: 1, minWidth: 0, overflowY: "auto" }}>
-        {children}
-      </main>
+      {/* Backdrop — mobile only, shown while drawer is open */}
+      {open && <div className="overlay" onClick={() => setOpen(false)} />}
+
+      <div style={{ display: "flex" }}>
+        {/* SIDEBAR */}
+        <aside className={`sidebar${open ? " sidebar-open" : ""}`} style={styles.sidebar}>
+          <div style={styles.logoRow}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={styles.logoMark}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
+                  <rect x="9" y="11" width="14" height="10" rx="2"/>
+                  <circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                </svg>
+              </div>
+              <span style={styles.logoText}>SwiftShip</span>
+            </div>
+            <button aria-label="Close menu" className="close-btn" onClick={() => setOpen(false)} style={styles.iconBtn}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* Nav */}
+          <nav style={{ flex: 1, padding: "12px 10px" }}>
+            {NAV.map((item) => {
+              const active = pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="nav-link"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "9px 12px", borderRadius: "var(--radius-sm)", marginBottom: 2,
+                    textDecoration: "none", fontSize: 13, fontWeight: active ? 700 : 500,
+                    color: active ? "var(--color-primary)" : "var(--color-body)",
+                    background: active ? "var(--color-accent-teal-light)" : "transparent",
+                    transition: "background 0.12s, color 0.12s",
+                  }}
+                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "var(--color-surface-alt)"; }}
+                  onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
+                >
+                  <span style={{ color: active ? "var(--color-primary)" : "var(--color-subtle)", flexShrink: 0 }}>{item.icon}</span>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* User + logout */}
+          <div style={{ padding: "12px 10px 16px", borderTop: "1px solid var(--color-border-light)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: "var(--radius-sm)", marginBottom: 4 }}>
+              <div style={styles.avatar}>{initials}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--color-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {user.name}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--color-subtle)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {user.email}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 10,
+                padding: "9px 12px", borderRadius: "var(--radius-sm)", border: "none", background: "transparent",
+                fontSize: 13, fontWeight: 500, color: "var(--color-error-text)", cursor: "pointer", textAlign: "left",
+                fontFamily: "var(--font-sans)", transition: "background 0.12s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-error-bg)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Sign out
+            </button>
+          </div>
+        </aside>
+
+        {/* MAIN */}
+        <main className="main-content" style={{ flex: 1, minWidth: 0, overflowY: "auto" }}>
+          {children}
+        </main>
+      </div>
+
+      <style jsx>{`
+        .mobile-topbar {
+          display: none;
+        }
+        .overlay {
+          display: none;
+        }
+        .close-btn {
+          display: none;
+        }
+
+        @media (max-width: 768px) {
+          .mobile-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border-light);
+            position: sticky;
+            top: 0;
+            z-index: 30;
+          }
+          .sidebar {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            transform: translateX(-100%);
+            z-index: 50;
+            box-shadow: var(--shadow-lg);
+          }
+          .sidebar-open {
+            transform: translateX(0);
+          }
+          .close-btn {
+            display: inline-flex !important;
+          }
+          .overlay {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 24, 28, 0.45);
+            z-index: 45;
+          }
+        }
+      `}</style>
     </div>
   );
-        }
+}
+
+const styles: Record<string, React.CSSProperties> = {
+  sidebar: {
+    width: 228, flexShrink: 0, background: "var(--color-sidebar-bg)",
+    borderRight: "1px solid var(--color-sidebar-border)",
+    display: "flex", flexDirection: "column",
+    position: "sticky", top: 0, height: "100vh", overflowY: "auto",
+    transition: "transform 0.25s ease",
+  },
+  logoRow: {
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    padding: "20px 20px 16px", borderBottom: "1px solid var(--color-border-light)",
+  },
+  logoMark: {
+    width: 28, height: 28, background: "var(--color-ink)", borderRadius: "var(--radius-sm)",
+    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+  },
+  logoText: {
+    fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 13, color: "var(--color-ink)",
+    letterSpacing: "0.02em", textTransform: "uppercase",
+  },
+  logoMarkSmall: {
+    width: 24, height: 24, background: "var(--color-ink)", borderRadius: "var(--radius-sm)",
+    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+  },
+  logoTextSmall: {
+    fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 13, color: "var(--color-ink)",
+    letterSpacing: "0.02em", textTransform: "uppercase",
+  },
+  iconBtn: {
+    background: "transparent", border: "none", padding: 4, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  },
+  avatar: {
+    width: 30, height: 30, borderRadius: "50%", background: "var(--color-accent-teal-light)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 11, color: "var(--color-accent-teal)",
+    flexShrink: 0,
+  },
+};
