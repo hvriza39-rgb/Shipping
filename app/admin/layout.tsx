@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import AdminShell from "@/components/admin/AdminShell";
 
 export default async function AdminLayout({
   children,
@@ -17,10 +18,8 @@ export default async function AdminLayout({
   }
 
   return (
-    <html lang="en">
-      <body style={{ margin: 0, padding: 0 }}>
-        {children}
-      </body>
-    </html>
+    <AdminShell user={{ name: session.user.name ?? "", email: session.user.email ?? "" }}>
+      {children}
+    </AdminShell>
   );
 }
