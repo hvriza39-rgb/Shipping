@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { Syne, Inter, Big_Shoulders_Display, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import "@fontsource-variable/big-shoulders-display";
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/500.css";
+import "@fontsource/ibm-plex-sans/600.css";
+import "@fontsource/ibm-plex-mono/400.css";
+import "@fontsource/ibm-plex-mono/700.css";
 import "./globals.css";
 
 const syne = Syne({
