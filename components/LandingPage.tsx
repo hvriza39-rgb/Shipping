@@ -233,7 +233,7 @@ const CSS = `
 .hero{position:relative;min-height:100svh;padding:70px 40px 0;display:flex;flex-direction:column}
 .hero-copy{max-width:620px;margin-top:10vh;color:var(--ink)}
 .hero h1{font-size:clamp(48px,7.5vw,96px);line-height:1}
-.hero p{font-size:17px;line-height:1.6;color:var(--ink);max-width:470px;margin:20px 0 22px;padding:14px 20px;background:rgba(255,255,255,.72);backdrop-filter:blur(14px);border-radius:22px}
+.hero p{font-size:17px;line-height:1.6;color:var(--ink);max-width:470px;margin:20px 0 22px;padding:14px 20px;background:rgba(255,255,255,.32);backdrop-filter:blur(14px);border-radius:22px}
 .track{display:flex;max-width:520px;padding:6px;background:rgba(255,255,255,.85);border-radius:999px;box-shadow:0 14px 36px rgba(16,40,60,.16)}
 .track input{flex:1;min-width:0;padding:10px 18px;font:14px var(--font-mono),monospace;border:0;background:transparent;color:var(--ink)}
 .track input:focus-visible{outline:none}
