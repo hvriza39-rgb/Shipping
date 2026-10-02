@@ -233,11 +233,11 @@ const CSS = `
 .hero{position:relative;min-height:100svh;padding:70px 40px 0;display:flex;flex-direction:column}
 .hero-copy{max-width:620px;margin-top:10vh;color:var(--ink)}
 .hero h1{font-size:clamp(48px,7.5vw,96px);line-height:1}
-.hero p{font-size:18px;line-height:1.65;color:#2F4558;max-width:470px;margin:20px 0 28px}
+.hero p{font-size:17px;line-height:1.6;color:var(--ink);max-width:470px;margin:20px 0 22px;padding:14px 20px;background:rgba(255,255,255,.72);backdrop-filter:blur(14px);border-radius:22px}
 .track{display:flex;max-width:520px;padding:6px;background:rgba(255,255,255,.85);border-radius:999px;box-shadow:0 14px 36px rgba(16,40,60,.16)}
 .track input{flex:1;min-width:0;padding:10px 18px;font:14px var(--font-mono),monospace;border:0;background:transparent;color:var(--ink)}
 .track input:focus-visible{outline:none}
-.hero-link{display:inline-block;margin:16px 0 0 8px;font-size:14px;font-weight:500;color:var(--ink);opacity:.8}
+.hero-link{display:inline-block;margin:16px 0 0;font-size:14px;font-weight:600;color:var(--ink);padding:8px 16px;background:rgba(255,255,255,.72);backdrop-filter:blur(14px);border-radius:999px}
 .log{position:absolute;left:20px;right:20px;bottom:20px;overflow:hidden;background:rgba(12,32,50,.45);backdrop-filter:blur(10px);border-radius:999px;padding:11px 0}
 .log-track{display:flex;width:max-content;animation:tick 40s linear infinite}
 .log-item{font:11px var(--font-mono),monospace;color:rgba(255,255,255,.8);padding:0 26px;white-space:nowrap}
