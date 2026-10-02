@@ -8,7 +8,7 @@
 
 
   /* Brand — route red replaces the old blue */
-  --color-primary:        #8EB6D1;
+  --color-primary:        #2B5A7C;
   --color-primary-light:  #f08175;
   --color-primary-dark:   #6E1111;
   --color-primary-border: ##EF9595;
@@ -26,7 +26,7 @@
   --color-placeholder: #ADB5BE;
 
   /* Surfaces — paper world */
-  --color-bg:            #D2EEEC;
+  --color-bg:            #8EB6D1;
   --color-surface:       #FBFCF8;
   --color-surface-alt:   #F4F5EF;
   --color-surface-hover: #E3E6D9;
