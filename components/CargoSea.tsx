@@ -64,7 +64,7 @@ function build() {
     }
   }
 
-  return { waves: [...waves.entries()], sky, wins, stacks: [...stacks.entries()] };
+  return { waves: Array.from(waves.entries()), sky, wins, stacks: Array.from(stacks.entries()) };
 }
 
 const { waves, sky, wins, stacks } = build();
