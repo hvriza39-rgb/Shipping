@@ -1,5 +1,9 @@
 /* ─── Design Tokens ─────────────────────────────── */
-:root {
+::root {
+  --font-display: "Big Shoulders Display Variable";
+  --font-body: "IBM Plex Sans";
+  --font-mono: "IBM Plex Mono";
+
   /* Brand — route red replaces the old blue */
   --color-primary:        #B23A2E;
   --color-primary-light:  #f08175;
