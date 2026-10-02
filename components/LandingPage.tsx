@@ -1,442 +1,276 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import CargoSea from "@./CargoSea";
 
-// ─── DESIGN TOKENS ──────────────────────────────────────
-// Display: Big Shoulders Display (condensed, industrial — crate-stencil energy)
-// Body:    IBM Plex Sans (plain, official, form-like)
-// Mono:    IBM Plex Mono (tracking numbers, codes, ledger figures)
-const DISPLAY = "var(--font-display), 'Arial Narrow', sans-serif";
-const BODY    = "var(--font-body), system-ui, sans-serif";
-const MONO    = "var(--font-mono), 'Courier New', monospace";
+// ─── CONCEPT ────────────────────────────────────────────
+// The seascape is the whole site. It is fixed behind everything, the hero
+// sits in its sky, and as you scroll the "day" turns to dusk and the ship
+// drifts away. Content bands are dark glass over the water.
+// Display: Big Shoulders Display · Body: IBM Plex Sans · Mono: IBM Plex Mono
 
-const PAPER       = "#D2EEEC";
-const PAPER_LIGHT = "#DFF3EF";
-const PAPER_LINE  = "#D8CBAA";
-const PAPER_DARK  = "#E6D9B8";
-const INK         = "#1C2B3A";
-const INK_SOFT    = "#4B5A68";
-const NIGHT       = "#14181C";
-const STAMP       = "#B23A2E";
-const ROUTE       = "#2C6E78";
-const LEDGER_GREEN = "#3F7D5C";
-
-const MANIFEST_FEED = [
-  { id: "SHP-M3A2-XQRP", event: "Delivered",        location: "Los Angeles, CA", time: "2 min ago" },
-  { id: "SHP-N7B3-YWMQ", event: "Out for Delivery", location: "Miami, FL",       time: "5 min ago" },
-  { id: "SHP-P9C4-ZTLV", event: "In Transit",       location: "Nashville, TN",   time: "8 min ago" },
-  { id: "SHP-Q2D5-ABKX", event: "Picked Up",        location: "Houston, TX",     time: "12 min ago" },
-  { id: "SHP-R8E6-CVNP", event: "Confirmed",        location: "Seattle, WA",     time: "15 min ago" },
-  { id: "SHP-S5F7-DWQR", event: "Delivered",        location: "Boston, MA",      time: "18 min ago" },
-  { id: "SHP-T1G8-EXMS", event: "In Transit",       location: "Chicago, IL",     time: "22 min ago" },
-  { id: "SHP-U4H9-FYNP", event: "Out for Delivery", location: "Phoenix, AZ",     time: "25 min ago" },
+const FEED = [
+  ["SHP-M3A2-XQRP", "Delivered", "Los Angeles, CA", "2 min ago"],
+  ["SHP-N7B3-YWMQ", "Out for delivery", "Miami, FL", "5 min ago"],
+  ["SHP-P9C4-ZTLV", "In transit", "Nashville, TN", "8 min ago"],
+  ["SHP-Q2D5-ABKX", "Picked up", "Houston, TX", "12 min ago"],
+  ["SHP-R8E6-CVNP", "Confirmed", "Seattle, WA", "15 min ago"],
+  ["SHP-S5F7-DWQR", "Delivered", "Boston, MA", "18 min ago"],
 ];
 
-const STATUS_INK: Record<string, string> = {
-  "Delivered":        LEDGER_GREEN,
-  "Out for Delivery": STAMP,
-  "In Transit":       ROUTE,
-  "Picked Up":        "#8A6D3B",
-  "Confirmed":        INK_SOFT,
-};
-
-const PACKING_LIST = [
-  { code: "01", title: "Real-time tracking", desc: "Every status update, the moment it happens. From pickup to doorstep, the manifest never goes stale." },
-  { code: "02", title: "Same-day booking",   desc: "Enter addresses, pick a service level, done in under two minutes — no account setup required first." },
-  { code: "03", title: "Digital paperwork",  desc: "Invoices, receipts, and shipment history filed automatically. Nothing to chase, nothing to print." },
+const STATS = [
+  { label: "Packages delivered", value: 52000, suffix: "+" },
+  { label: "On-time rate", value: 98, suffix: "%" },
+  { label: "Average booking", value: 2, suffix: " min" },
+  { label: "Support", value: 24, suffix: "/7" },
 ];
 
-const ROUTE_STATIONS = [
-  { n: "01", title: "Book online",      desc: "Enter pickup and delivery addresses, package details, and choose your service level." },
-  { n: "02", title: "We pick it up",    desc: "A courier collects your package at the scheduled time. You're notified the moment it's in hand." },
-  { n: "03", title: "Track every move", desc: "Live checkpoint updates from our network. Know exactly where your package is, always." },
+const FEATURES = [
+  { title: "Real-time tracking", desc: "Every status update, the moment it happens. From pickup to doorstep, the record never goes stale." },
+  { title: "Same-day booking", desc: "Enter addresses, pick a service level, and you're done in under two minutes. No account setup first." },
+  { title: "Digital paperwork", desc: "Invoices, receipts, and shipment history filed automatically. Nothing to chase, nothing to print." },
 ];
 
-const LEDGER_STATS = [
-  { label: "Packages delivered",     value: 52000, suffix: "+" },
-  { label: "On-time delivery rate",  value: 98,    suffix: "%" },
-  { label: "Average booking time",   value: 2,     suffix: " min" },
-  { label: "Support availability",   value: 24,    suffix: "/7" },
+const STEPS = [
+  { title: "Book online", desc: "Enter pickup and delivery addresses, package details, and a service level." },
+  { title: "We pick it up", desc: "A courier collects your package at the scheduled time and you're notified right away." },
+  { title: "Track every move", desc: "Live checkpoint updates from our network, so you always know where it is." },
 ];
 
 function useCountUp(target: number, duration: number, start: boolean) {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!start) return;
-    let startTime: number | null = null;
+    let t0: number | null = null;
     const step = (ts: number) => {
-      if (!startTime) startTime = ts;
-      const progress = Math.min((ts - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * target));
-      if (progress < 1) requestAnimationFrame(step);
+      if (t0 === null) t0 = ts;
+      const p = Math.min((ts - t0) / duration, 1);
+      setCount(Math.floor((1 - Math.pow(1 - p, 3)) * target));
+      if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
   }, [start, target, duration]);
   return count;
 }
 
-function LedgerRow({ label, value, suffix, animate }: { label: string; value: number; suffix: string; animate: boolean }) {
-  const count = useCountUp(value, 1400, animate);
+function Stat({ label, value, suffix, go }: { label: string; value: number; suffix: string; go: boolean }) {
+  const n = useCountUp(value, 1400, go);
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 12, padding: "16px 0", borderBottom: `1px dashed ${PAPER_LINE}` }}>
-      <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: "0.08em", color: INK_SOFT, textTransform: "uppercase", whiteSpace: "nowrap" }}>
-        {label}
-      </span>
-      <span style={{ flex: 1, borderBottom: "1px dotted #B9AC8A", marginBottom: 6 }} />
-      <span style={{ fontFamily: MONO, fontSize: 24, fontWeight: 700, color: INK, whiteSpace: "nowrap" }}>
-        {count.toLocaleString()}<span style={{ color: STAMP }}>{suffix}</span>
-      </span>
+    <div className="stat">
+      <div className="stat-n">{n.toLocaleString()}<span>{suffix}</span></div>
+      <div className="stat-l">{label}</div>
     </div>
   );
 }
 
 export default function LandingPage() {
-  const [ledgerVisible, setLedgerVisible] = useState(false);
-  const ledgerRef = useRef<HTMLElement>(null);
+  const router = useRouter();
+  const [num, setNum] = useState("");
+  const [statsOn, setStatsOn] = useState(false);
+  const sceneRef = useRef<HTMLDivElement>(null);
+  const duskRef = useRef<HTMLDivElement>(null);
+  const statsRef = useRef<HTMLElement>(null);
+
+  // scroll → day to dusk, ship drifts away (skipped for reduced motion)
+  useEffect(() => {
+    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const p = max > 0 ? Math.min(1, window.scrollY / max) : 0;
+      if (duskRef.current) duskRef.current.style.opacity = String(p * 0.78);
+      if (sceneRef.current && !calm)
+        sceneRef.current.style.transform = `translate3d(${-p * 60}px, ${-p * 24}px, 0) scale(1.08)`;
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); if (raf) cancelAnimationFrame(raf); };
+  }, []);
 
   useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setLedgerVisible(true); },
-      { threshold: 0.3 }
-    );
-    if (ledgerRef.current) obs.observe(ledgerRef.current);
+    const obs = new IntersectionObserver(([e]) => e.isIntersecting && setStatsOn(true), { threshold: 0.4 });
+    if (statsRef.current) obs.observe(statsRef.current);
     return () => obs.disconnect();
   }, []);
 
-  return (
-    <div style={{ fontFamily: BODY, color: INK, overflowX: "hidden", background: PAPER }}>
+  const track = (e: FormEvent) => {
+    e.preventDefault();
+    const v = num.trim();
+    router.push(v ? `/track?n=${encodeURIComponent(v)}` : "/track");
+  };
 
-      {/* NAV */}
-      <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        height: 58, display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 40px", background: NIGHT, borderBottom: `2px solid ${STAMP}`,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 30, height: 30, background: STAMP, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" />
-              <rect x="9" y="11" width="14" height="10" rx="2" />
-              <circle cx="12" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-            </svg>
-          </div>
-          <span style={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: 19, color: "#fff", letterSpacing: "0.01em", textTransform: "uppercase" }}>
-            SwiftShip
-          </span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <Link href="/track" className="nav-link" style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 500, textDecoration: "none", padding: "7px 14px", transition: "color 0.15s" }}>Track</Link>
-          <Link href="/login" className="nav-link" style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 500, textDecoration: "none", padding: "7px 14px", transition: "color 0.15s" }}>Sign in</Link>
-          <Link href="/register" className="btn-p" style={{ background: STAMP, color: "#fff", fontSize: 13, fontWeight: 700, textDecoration: "none", padding: "8px 18px", borderRadius: 3, marginLeft: 4, transition: "background 0.15s" }}>Get started</Link>
+  return (
+    <div className="ss">
+      <style>{CSS}</style>
+
+      <div className="scene" aria-hidden="true">
+        <div ref={sceneRef} className="scene-in"><CargoSea /></div>
+        <div ref={duskRef} className="dusk" />
+      </div>
+
+      <nav className="nav">
+        <Link href="/" className="brand">SwiftShip</Link>
+        <div className="nav-r">
+          <Link href="/track">Track</Link>
+          <Link href="/login">Sign in</Link>
+          <Link href="/register" className="btn btn-rust">Get started</Link>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section style={{ paddingTop: 58, position: "relative", overflow: "hidden" }}>
-
-        {/* barcode strip */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 40px", borderBottom: `1px solid ${PAPER_LINE}` }}>
-          <div style={{
-            height: 16, width: 220,
-            backgroundImage: "repeating-linear-gradient(90deg, #1C2B3A 0px, #1C2B3A 2px, transparent 2px, transparent 5px, #1C2B3A 5px, #1C2B3A 6px, transparent 6px, transparent 11px, #1C2B3A 11px, #1C2B3A 14px, transparent 14px, transparent 18px)",
-            opacity: 0.8,
-          }} />
-          <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: INK_SOFT, whiteSpace: "nowrap" }}>
-            MANIFEST NO. 7741-SS &middot; ZONE 4
-          </span>
-        </div>
-
-        <div style={{
-          position: "absolute", inset: 0, top: 0,
-          backgroundImage: `radial-gradient(${PAPER_LINE} 1px, transparent 1px)`,
-          backgroundSize: "22px 22px", opacity: 0.35, pointerEvents: "none",
-        }} />
-
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", maxWidth: 1160, margin: "0 auto", width: "100%", position: "relative", zIndex: 1, gap: 48, padding: "64px 40px 56px", flexWrap: "wrap" }}>
-
-          {/* Left */}
-          <div style={{ maxWidth: 560, minWidth: 300 }}>
-            <div className="stamp" style={{
-              display: "inline-flex", alignItems: "center", gap: 7,
-              border: `2px solid ${STAMP}`, color: STAMP, borderRadius: 4,
-              padding: "5px 12px", marginBottom: 26, transform: "rotate(-3deg)",
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: LEDGER_GREEN }} />
-              <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em" }}>TRACKING ACTIVE</span>
-            </div>
-
-            <h1 style={{
-              fontFamily: DISPLAY, fontSize: "clamp(40px, 6vw, 64px)", fontWeight: 700,
-              color: INK, letterSpacing: "0.005em", lineHeight: 1.04, margin: 0,
-              textTransform: "uppercase",
-            }}>
-              Every package
-              <br />leaves a <span style={{ color: STAMP }}>record.</span>
-            </h1>
-
-            <p style={{ fontFamily: BODY, fontSize: 17, color: INK_SOFT, lineHeight: 1.7, margin: "22px 0 36px", maxWidth: 430 }}>
-              Book a pickup, get a tracking number, and watch the manifest update at every checkpoint — from dock to doorstep.
-            </p>
-
-            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-              <Link href="/register" className="btn-p" style={{ background: INK, color: "#fff", fontWeight: 700, fontSize: 14, textDecoration: "none", padding: "13px 28px", borderRadius: 3, transition: "background 0.15s", letterSpacing: "0.01em" }}>
-                Start shipping &rarr;
-              </Link>
-              <Link href="/track" className="btn-o" style={{ color: INK, fontWeight: 600, fontSize: 13, textDecoration: "none", padding: "12px 20px", borderRadius: 3, border: `1.5px solid ${INK}`, transition: "background 0.15s" }}>
-                Track a package
-              </Link>
-            </div>
+      <main>
+        {/* HERO — headline lives in the sky, ship sails below it */}
+        <section className="hero">
+          <div className="hero-copy">
+            <h1>Every package<br />leaves a wake.</h1>
+            <p>Book a pickup, get a tracking number, and follow your shipment checkpoint by checkpoint, from dock to doorstep.</p>
+            <form onSubmit={track} className="track">
+              <input value={num} onChange={(e) => setNum(e.target.value)} placeholder="Tracking number, e.g. SHP-M3A2-XQRP" aria-label="Tracking number" />
+              <button className="btn btn-ink" type="submit">Track</button>
+            </form>
+            <Link href="/register" className="hero-link">or book a pickup</Link>
           </div>
 
-          {/* Right — torn label stub */}
-          <div style={{ flexShrink: 0, position: "relative" }}>
-            <div style={{
-              background: PAPER_LIGHT, border: `1.5px solid ${PAPER_LINE}`, borderRadius: 4,
-              padding: 26, width: 320, boxShadow: "0 18px 40px rgba(28,43,58,0.12)",
-              borderTopStyle: "dashed", position: "relative",
-            }}>
-              <div style={{
-                position: "absolute", top: -10, right: 22, border: `2px solid ${STAMP}`, color: STAMP,
-                fontFamily: MONO, fontWeight: 700, fontSize: 10, letterSpacing: "0.1em",
-                padding: "3px 8px", borderRadius: 3, background: PAPER_LIGHT, transform: "rotate(6deg)",
-              }}>
-                VERIFIED
-              </div>
+          <div className="log" aria-label="Recent shipment activity">
+            <div className="log-track">
+              {[...FEED, ...FEED].map(([id, ev, loc, t], i) => (
+                <span key={i} className="log-item">
+                  <b>{id}</b> {ev} <i>{loc}</i> {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-                <div>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: INK_SOFT, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>Tracking No.</div>
-                  <div style={{ fontFamily: MONO, fontSize: 13, color: ROUTE, fontWeight: 700 }}>SHP-M3A2-XQRP</div>
-                </div>
-                <div style={{ background: "rgba(63,125,92,0.12)", color: LEDGER_GREEN, fontFamily: MONO, fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 3, border: `1px solid ${LEDGER_GREEN}` }}>
-                  Delivered &#10003;
-                </div>
-              </div>
+        {/* STATS */}
+        <section ref={statsRef} className="band">
+          <div className="wrap stats">
+            {STATS.map((s) => <Stat key={s.label} {...s} go={statsOn} />)}
+          </div>
+        </section>
 
-              <div style={{ borderTop: `1px dashed ${PAPER_LINE}`, borderBottom: `1px dashed ${PAPER_LINE}`, padding: "10px 4px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: INK_SOFT, fontWeight: 700, textTransform: "uppercase", marginBottom: 2 }}>From</div>
-                  <div style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: 700, color: INK }}>NYC</div>
-                </div>
-                <div style={{ flex: 1, height: 1, background: PAPER_LINE }} />
-                <span style={{ fontSize: 14, color: INK_SOFT }}>&#9992;</span>
-                <div style={{ flex: 1, height: 1, background: PAPER_LINE }} />
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: INK_SOFT, fontWeight: 700, textTransform: "uppercase", marginBottom: 2 }}>To</div>
-                  <div style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: 700, color: INK }}>LAX</div>
-                </div>
-              </div>
-
-              {[
-                { label: "Order Placed",     time: "Jun 19, 8:30 AM" },
-                { label: "Picked Up",        time: "Jun 19, 2:00 PM" },
-                { label: "In Transit",       time: "Jun 20, 9:00 AM" },
-                { label: "Out for Delivery", time: "Jun 21, 7:30 AM" },
-                { label: "Delivered",        time: "Jun 21, 2:22 PM" },
-              ].map((step, i, arr) => (
-                <div key={i} style={{ display: "flex", gap: 10 }}>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 14, flexShrink: 0 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: LEDGER_GREEN, marginTop: 3, flexShrink: 0 }} />
-                    {i < arr.length - 1 && <div style={{ width: 1.5, flex: 1, minHeight: 12, background: PAPER_LINE }} />}
-                  </div>
-                  <div style={{ paddingBottom: 9 }}>
-                    <div style={{ fontFamily: BODY, fontSize: 11, fontWeight: 600, color: INK }}>{step.label}</div>
-                    <div style={{ fontFamily: MONO, fontSize: 10, color: INK_SOFT, marginTop: 1 }}>{step.time}</div>
-                  </div>
+        {/* FEATURES */}
+        <section className="band">
+          <div className="wrap">
+            <h2>Built for people who actually ship things</h2>
+            <div className="feat">
+              {FEATURES.map((f) => (
+                <div key={f.title} className="feat-i">
+                  <h3>{f.title}</h3>
+                  <p>{f.desc}</p>
                 </div>
               ))}
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Customs-tape ticker */}
-        <div style={{ background: PAPER_DARK, borderTop: `1px dashed ${PAPER_LINE}`, borderBottom: `1px dashed ${PAPER_LINE}`, padding: "12px 0", overflow: "hidden" }}>
-          <div style={{ display: "flex", animation: "ticker 30s linear infinite", width: "max-content" }}>
-            {[...MANIFEST_FEED, ...MANIFEST_FEED].map((evt, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 28px", borderRight: `1px solid ${PAPER_LINE}`, whiteSpace: "nowrap" }}>
-                <span style={{ width: 5, height: 5, borderRadius: "50%", background: STATUS_INK[evt.event] ?? INK_SOFT, flexShrink: 0 }} />
-                <span style={{ fontFamily: MONO, fontSize: 10, color: INK_SOFT, fontWeight: 700 }}>{evt.id}</span>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: STATUS_INK[evt.event] ?? INK_SOFT, fontWeight: 600 }}>{evt.event}</span>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: INK_SOFT }}>{evt.location}</span>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: "#8A7C5C" }}>{evt.time}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* LEDGER / STATS */}
-      <section ref={ledgerRef} style={{ background: PAPER_LIGHT, padding: "72px 40px" }}>
-        <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: ROUTE, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 18 }}>
-            Ledger — Year to date
-          </div>
-          {LEDGER_STATS.map((s) => (
-            <LedgerRow key={s.label} {...s} animate={ledgerVisible} />
-          ))}
-        </div>
-      </section>
-
-      {/* PACKING LIST / FEATURES */}
-      <section style={{ background: "#fff", padding: "96px 40px" }}>
-        <div style={{ maxWidth: 880, margin: "0 auto" }}>
-          <div style={{ marginBottom: 44 }}>
-            <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: ROUTE, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Packing list</div>
-            <h2 style={{ fontFamily: DISPLAY, fontSize: 34, fontWeight: 700, letterSpacing: "0.005em", color: INK, margin: 0, textTransform: "uppercase" }}>
-              Built for people who actually ship things
-            </h2>
-          </div>
-          <div>
-            {PACKING_LIST.map((f, i) => (
-              <div key={i} style={{ display: "flex", gap: 22, alignItems: "flex-start", padding: "26px 0", borderTop: i === 0 ? `1px dashed ${PAPER_LINE}` : undefined, borderBottom: `1px dashed ${PAPER_LINE}` }}>
-                <div style={{
-                  width: 30, height: 30, flexShrink: 0, border: `1.5px solid ${INK}`, borderRadius: 3,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontFamily: MONO, fontSize: 12, fontWeight: 700, color: INK,
-                }}>
-                  {f.code}
-                </div>
-                <div>
-                  <div style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: 700, color: INK, letterSpacing: "0.005em", marginBottom: 7, textTransform: "uppercase" }}>{f.title}</div>
-                  <div style={{ fontFamily: BODY, fontSize: 14, color: INK_SOFT, lineHeight: 1.65, maxWidth: 520 }}>{f.desc}</div>
-                </div>
-                <div style={{ marginLeft: "auto", color: LEDGER_GREEN, fontSize: 18, flexShrink: 0 }}>&#10003;</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ROUTE / HOW IT WORKS */}
-      <section style={{ background: PAPER, padding: "96px 40px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ marginBottom: 60 }}>
-            <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: ROUTE, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>The route</div>
-            <h2 style={{ fontFamily: DISPLAY, fontSize: 34, fontWeight: 700, letterSpacing: "0.005em", color: INK, margin: 0, textTransform: "uppercase" }}>From booking to doorstep</h2>
-          </div>
-
-          <div style={{ position: "relative" }}>
-            <div style={{ position: "absolute", top: 17, left: 0, right: 0, height: 0, borderTop: `2px dashed ${PAPER_LINE}`, zIndex: 0 }} />
-            <div style={{ display: "flex", gap: 0, flexWrap: "wrap", position: "relative", zIndex: 1 }}>
-              {ROUTE_STATIONS.map((s, i) => (
-                <div key={i} style={{ flex: 1, minWidth: 220, paddingRight: 32 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: "50%", background: PAPER, border: `2px solid ${INK}`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontFamily: MONO, fontSize: 13, fontWeight: 700, color: INK, marginBottom: 18,
-                  }}>
-                    {s.n}
-                  </div>
-                  <div style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: 700, color: INK, letterSpacing: "0.005em", marginBottom: 9, textTransform: "uppercase" }}>{s.title}</div>
-                  <div style={{ fontFamily: BODY, fontSize: 13.5, color: INK_SOFT, lineHeight: 1.65 }}>{s.desc}</div>
-                </div>
+        {/* ROUTE */}
+        <section className="band">
+          <div className="wrap">
+            <h2>From booking to doorstep</h2>
+            <ol className="route">
+              {STEPS.map((s, i) => (
+                <li key={s.title}>
+                  <span className="dot">{i + 1}</span>
+                  <h3>{s.title}</h3>
+                  <p>{s.desc}</p>
+                </li>
               ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="band cta">
+          <div className="wrap">
+            <h2>Ready to start shipping?</h2>
+            <p>Create your free account and book your first shipment today. No credit card required.</p>
+            <div className="row">
+              <Link href="/register" className="btn btn-white">Create free account</Link>
+              <Link href="/login" className="btn btn-line">Sign in</Link>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* WAREHOUSE IMAGE */}
-      <section style={{ position: "relative", height: 460, overflow: "hidden" }}>
-        <img
-          src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1600&q=80"
-          alt="Warehouse operations"
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-        />
-        <div style={{ position: "absolute", inset: 0, background: `linear-gradient(90deg, ${NIGHT} 0%, rgba(20,24,28,0.3) 100%)` }} />
-        <div style={{
-          position: "absolute", top: 28, right: 28, border: "2px solid #fff", color: "#fff",
-          fontFamily: MONO, fontWeight: 700, fontSize: 11, letterSpacing: "0.1em",
-          padding: "5px 12px", borderRadius: 3, transform: "rotate(5deg)",
-        }}>
-          VERIFIED ROUTE
+      <footer className="foot">
+        <span className="brand">SwiftShip</span>
+        <div>
+          {["Terms", "Privacy", "Contact"].map((l) => <a key={l} href="#">{l}</a>)}
+          <Link href="/track">Track a package</Link>
         </div>
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", padding: "0 80px" }}>
-          <div style={{ maxWidth: 480 }}>
-            <h2 style={{ fontFamily: DISPLAY, fontSize: 34, fontWeight: 700, color: "#fff", letterSpacing: "0.005em", margin: "0 0 14px", lineHeight: 1.15, textTransform: "uppercase" }}>
-              Infrastructure built for scale
-            </h2>
-            <p style={{ fontFamily: BODY, fontSize: 15, color: "rgba(255,255,255,0.65)", lineHeight: 1.7, margin: "0 0 26px" }}>
-              Our courier network covers all 50 states, with same-day and overnight options across major cities.
-            </p>
-            <Link href="/register" className="btn-w" style={{ display: "inline-block", background: "#fff", color: NIGHT, fontWeight: 700, fontSize: 14, textDecoration: "none", padding: "12px 24px", borderRadius: 3, transition: "background 0.15s" }}>
-              Get started free
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* PHOTO GRID / FIELD NOTES */}
-      <section style={{ background: "#fff", padding: "96px 40px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            <div style={{ flex: 2, minWidth: 280 }}>
-              <div style={{ borderRadius: 4, overflow: "hidden", height: 320 }}>
-                <img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=900&q=80" alt="Delivery van" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: INK_SOFT, letterSpacing: "0.06em", marginTop: 10, textTransform: "uppercase" }}>Last mile &mdash; Phoenix, AZ</div>
-            </div>
-            <div style={{ flex: 1, minWidth: 200, display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>
-                <div style={{ borderRadius: 4, overflow: "hidden", height: 145 }}>
-                  <img src="https://images.unsplash.com/photo-1524508762098-b9f8c975d5ec?w=600&q=80" alt="Packages" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: 11, color: INK_SOFT, letterSpacing: "0.06em", marginTop: 10, textTransform: "uppercase" }}>Sorting &mdash; Atlanta, GA</div>
-              </div>
-              <div>
-                <div style={{ borderRadius: 4, overflow: "hidden", height: 113 }}>
-                  <img src="https://images.unsplash.com/photo-1609743522653-52354461eb27?w=600&q=80" alt="Courier" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: 11, color: INK_SOFT, letterSpacing: "0.06em", marginTop: 10, textTransform: "uppercase" }}>Dock handoff &mdash; Dallas, TX</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section style={{ background: STAMP, padding: "96px 40px" }}>
-        <div style={{ maxWidth: 580, margin: "0 auto", textAlign: "center" }}>
-          <h2 style={{ fontFamily: DISPLAY, fontSize: 38, fontWeight: 700, color: "#fff", letterSpacing: "0.005em", margin: "0 0 16px", lineHeight: 1.1, textTransform: "uppercase" }}>
-            Ready to start shipping?
-          </h2>
-          <p style={{ fontFamily: BODY, fontSize: 16, color: "rgba(255,255,255,0.85)", margin: "0 0 36px", lineHeight: 1.65 }}>
-            Create your free account and book your first shipment today. No credit card required.
-          </p>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/register" className="btn-w" style={{ background: "#fff", color: STAMP, fontWeight: 800, fontSize: 14, textDecoration: "none", padding: "13px 30px", borderRadius: 3, transition: "background 0.15s" }}>
-              Create free account
-            </Link>
-            <Link href="/login" className="btn-o" style={{ color: "#fff", fontWeight: 600, fontSize: 13, textDecoration: "none", padding: "13px 20px", borderRadius: 3, border: "1.5px solid rgba(255,255,255,0.6)", transition: "background 0.15s" }}>
-              Sign in
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer style={{ background: NIGHT, padding: "44px 40px", borderTop: `2px dashed ${STAMP}` }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 26, height: 26, background: STAMP, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" />
-                <rect x="9" y="11" width="14" height="10" rx="2" />
-                <circle cx="12" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-              </svg>
-            </div>
-            <span style={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: 16, color: "#fff", letterSpacing: "0.01em", textTransform: "uppercase" }}>SwiftShip</span>
-          </div>
-          <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-            {["Terms", "Privacy", "Contact", "Track a Package"].map((l) => (
-              <a key={l} href="#" className="foot-link" style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, fontWeight: 500, textDecoration: "none", transition: "color 0.15s" }}>{l}</a>
-            ))}
-          </div>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: "rgba(255,255,255,0.25)" }}>&#169; 2026 SwiftShip. All rights reserved.</div>
-        </div>
+        <small>&copy; 2026 SwiftShip. All rights reserved.</small>
       </footer>
     </div>
   );
 }
+
+const CSS = `
+.ss{--ink:#10283C;--sea:#2E6286;--rust:#B5573A;--mist:#EAF1F6;--glass:rgba(11,28,44,.8);
+  font-family:var(--font-body),system-ui,sans-serif;color:var(--mist);position:relative;overflow-x:hidden}
+.ss a{color:inherit;text-decoration:none}
+.ss h1,.ss h2,.ss h3,.brand{font-family:var(--font-display),'Arial Narrow',sans-serif;font-weight:700;text-transform:uppercase;margin:0}
+.scene{position:fixed;inset:0;z-index:0;overflow:hidden;background:#DCE5EE}
+.scene-in{position:absolute;inset:0;will-change:transform;transform-origin:70% 60%}
+.scene .bg-skyline{width:100%;height:100%;display:block}
+.dusk{position:absolute;inset:0;opacity:0;background:linear-gradient(#1B2A52,#0B1C2C)}
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;height:58px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;
+  background:rgba(11,28,44,.72);backdrop-filter:blur(10px);border-bottom:2px solid var(--rust)}
+.brand{font-size:20px;letter-spacing:.02em;color:#fff}
+.nav-r{display:flex;align-items:center;gap:6px}
+.nav-r a{font-size:13px;font-weight:500;padding:7px 14px;color:rgba(255,255,255,.7)}
+.nav-r a:hover{color:#fff}
+.btn{display:inline-block;font-weight:700;font-size:14px;border-radius:3px;padding:12px 24px;border:1.5px solid transparent;cursor:pointer;font-family:inherit}
+.nav-r .btn{padding:8px 18px;font-size:13px;color:#fff}
+.btn-rust{background:var(--rust)}.btn-rust:hover{background:#9c4730}
+.btn-ink{background:var(--ink);color:#fff}.btn-ink:hover{background:#1b4060}
+.btn-white{background:#fff;color:var(--rust)}
+.btn-line{border-color:rgba(255,255,255,.6);color:#fff}
+.btn:focus-visible,.ss input:focus-visible,.ss a:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.hero{position:relative;min-height:100svh;padding:58px 40px 0;display:flex;flex-direction:column;justify-content:flex-start}
+.hero-copy{max-width:600px;margin-top:9vh;color:var(--ink)}
+.hero h1{font-size:clamp(46px,7.5vw,92px);line-height:.98}
+.hero p{font-size:17px;line-height:1.65;color:#2F4558;max-width:460px;margin:20px 0 28px}
+.track{display:flex;max-width:520px;box-shadow:0 12px 32px rgba(16,40,60,.18)}
+.track input{flex:1;min-width:0;padding:14px 16px;font:14px var(--font-mono),monospace;border:1.5px solid var(--ink);border-right:0;border-radius:3px 0 0 3px;background:#fff;color:var(--ink)}
+.track .btn{border-radius:0 3px 3px 0}
+.hero-link{display:inline-block;margin-top:16px;font-size:14px;font-weight:600;color:var(--ink);border-bottom:1.5px solid var(--rust)}
+.log{position:absolute;left:0;right:0;bottom:0;overflow:hidden;background:rgba(11,28,44,.7);backdrop-filter:blur(6px);padding:11px 0}
+.log-track{display:flex;width:max-content;animation:tick 40s linear infinite}
+.log-item{font:11px var(--font-mono),monospace;color:rgba(255,255,255,.75);padding:0 28px;border-right:1px solid rgba(255,255,255,.15);white-space:nowrap}
+.log-item b{color:#fff}.log-item i{font-style:normal;color:#9CC4DD}
+@keyframes tick{to{transform:translateX(-50%)}}
+.band{position:relative;background:var(--glass);backdrop-filter:blur(10px);padding:88px 40px}
+.wrap{max-width:1040px;margin:0 auto}
+.band h2{font-size:clamp(30px,4vw,42px);margin-bottom:44px;line-height:1.08}
+.band p{line-height:1.65;color:rgba(234,241,246,.78);margin:0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.stat{border-top:2px solid var(--rust);padding-top:14px}
+.stat-n{font:700 40px var(--font-mono),monospace;color:#fff}.stat-n span{color:#F0A27F}
+.stat-l{font-size:13px;color:rgba(234,241,246,.7);margin-top:6px}
+.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+.feat-i{border-top:1px solid rgba(255,255,255,.25);padding-top:20px}
+.ss h3{font-size:20px;margin-bottom:10px;color:#fff}
+.feat p,.route p{font-size:14.5px}
+.route{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:40px;position:relative}
+.route::before{content:"";position:absolute;top:17px;left:0;right:0;border-top:2px dashed rgba(255,255,255,.3)}
+.route li{position:relative}
+.dot{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;margin-bottom:18px;
+  background:#0B1C2C;border:2px solid #fff;font:700 13px var(--font-mono),monospace;color:#fff}
+.cta{background:rgba(181,87,58,.94);text-align:center}
+.cta p{color:rgba(255,255,255,.88);max-width:500px;margin:0 auto 30px}
+.cta .wrap{max-width:600px}.cta h2{margin-bottom:16px}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.foot{position:relative;background:#0B1C2C;padding:40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;border-top:2px dashed var(--rust)}
+.foot div{display:flex;gap:24px;flex-wrap:wrap}.foot a{font-size:12px;color:rgba(255,255,255,.55)}.foot a:hover{color:#fff}
+.foot small{font:11px var(--font-mono),monospace;color:rgba(255,255,255,.4)}
+@media(max-width:760px){
+  .nav{padding:0 16px}.nav-r a:not(.btn){display:none}
+  .hero{padding:58px 20px 0}.band{padding:64px 20px}.foot{padding:32px 20px}
+  .stats{grid-template-columns:1fr 1fr}.feat,.route{grid-template-columns:1fr;gap:28px}.route::before{display:none}
+}
+@media(prefers-reduced-motion:reduce){.log-track{animation:none}}
+`;
