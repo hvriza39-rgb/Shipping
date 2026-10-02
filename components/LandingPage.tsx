@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import CargoSea from "@./CargoSea";
+import CargoSea from "./CargoSea";
 
 // ─── CONCEPT ────────────────────────────────────────────
 // The seascape is the whole site. It is fixed behind everything, the hero
