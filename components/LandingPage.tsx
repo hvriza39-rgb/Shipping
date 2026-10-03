@@ -1,277 +1,1357 @@
 "use client";
 
-import { useState, useEffect, useRef, FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CargoSea from "@/components/CargoSea";
 
-// ─── CONCEPT ────────────────────────────────────────────
-// The seascape is the whole site. It is fixed behind everything, the hero
-// sits in its sky, and as you scroll the "day" turns to dusk and the ship
-// drifts away. Content bands are dark glass over the water.
-// Display: Big Shoulders Display · Body: IBM Plex Sans · Mono: IBM Plex Mono
-
 const FEED = [
-  ["SHP-M3A2-XQRP", "Delivered", "Los Angeles, CA", "2 min ago"],
-  ["SHP-N7B3-YWMQ", "Out for delivery", "Miami, FL", "5 min ago"],
-  ["SHP-P9C4-ZTLV", "In transit", "Nashville, TN", "8 min ago"],
-  ["SHP-Q2D5-ABKX", "Picked up", "Houston, TX", "12 min ago"],
-  ["SHP-R8E6-CVNP", "Confirmed", "Seattle, WA", "15 min ago"],
-  ["SHP-S5F7-DWQR", "Delivered", "Boston, MA", "18 min ago"],
+  {
+    code: "MSCU4829176",
+    origin: "ROTTERDAM",
+    destination: "SINGAPORE",
+    status: "IN TRANSIT",
+    eta: "OCT 14",
+  },
+  {
+    code: "MAEU7319054",
+    origin: "HAMBURG",
+    destination: "NEW YORK",
+    status: "AT SEA",
+    eta: "OCT 17",
+  },
+  {
+    code: "CMAU6184329",
+    origin: "SHANGHAI",
+    destination: "LOS ANGELES",
+    status: "LOADED",
+    eta: "OCT 21",
+  },
+  {
+    code: "OOLU2948173",
+    origin: "BUSAN",
+    destination: "ROTTERDAM",
+    status: "IN TRANSIT",
+    eta: "OCT 19",
+  },
+  {
+    code: "TGHU8526104",
+    origin: "DUBAI",
+    destination: "FELIXSTOWE",
+    status: "AT SEA",
+    eta: "OCT 23",
+  },
 ];
 
 const STATS = [
-  { label: "Packages delivered", value: 52000, suffix: "+" },
-  { label: "On-time rate", value: 98, suffix: "%" },
-  { label: "Average booking", value: 2, suffix: " min" },
-  { label: "Support", value: 24, suffix: "/7" },
+  { value: 184, suffix: "K", label: "SHIPMENTS TRACKED" },
+  { value: 97.4, suffix: "%", label: "ON-TIME ARRIVALS", decimals: 1 },
+  { value: 142, suffix: "", label: "PORTS CONNECTED" },
+  { value: 24, suffix: "/7", label: "GLOBAL VISIBILITY" },
 ];
 
 const FEATURES = [
-  { title: "Real-time tracking", desc: "Every status update, the moment it happens. From pickup to doorstep, the record never goes stale." },
-  { title: "Same-day booking", desc: "Enter addresses, pick a service level, and you're done in under two minutes. No account setup first." },
-  { title: "Digital paperwork", desc: "Invoices, receipts, and shipment history filed automatically. Nothing to chase, nothing to print." },
+  {
+    number: "01",
+    title: "LIVE POSITION",
+    text: "Know where your cargo is across oceans, terminals, and ports with continuously updated vessel intelligence.",
+  },
+  {
+    number: "02",
+    title: "ETA INTELLIGENCE",
+    text: "Turn vessel movement into clear arrival expectations with route-aware estimated arrival times.",
+  },
+  {
+    number: "03",
+    title: "EXCEPTION SIGNALS",
+    text: "Surface delays and route changes early, so your team can act before a shipment becomes a problem.",
+  },
 ];
 
 const STEPS = [
-  { title: "Book online", desc: "Enter pickup and delivery addresses, package details, and a service level." },
-  { title: "We pick it up", desc: "A courier collects your package at the scheduled time and you're notified right away." },
-  { title: "Track every move", desc: "Live checkpoint updates from our network, so you always know where it is." },
+  {
+    number: "01",
+    title: "ENTER",
+    text: "Drop in your shipment or container reference.",
+  },
+  {
+    number: "02",
+    title: "LOCATE",
+    text: "We connect the reference to its current logistics movement.",
+  },
+  {
+    number: "03",
+    title: "FOLLOW",
+    text: "Watch the journey unfold from origin to destination.",
+  },
 ];
 
-function useCountUp(target: number, duration: number, start: boolean) {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!start) return;
-    let t0: number | null = null;
-    const step = (ts: number) => {
-      if (t0 === null) t0 = ts;
-      const p = Math.min((ts - t0) / duration, 1);
-      setCount(Math.floor((1 - Math.pow(1 - p, 3)) * target));
-      if (p < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [start, target, duration]);
-  return count;
+function censorShipmentCode(code: string) {
+  if (code.length <= 4) return "••••";
+
+  return `${code.slice(0, -4)}••••`;
 }
 
-function Stat({ label, value, suffix, go }: { label: string; value: number; suffix: string; go: boolean }) {
-  const n = useCountUp(value, 1400, go);
+function useCountUp(
+  target: number,
+  duration = 1400,
+  decimals = 0,
+  enabled = true
+) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    let frame = 0;
+    const start = performance.now();
+
+    const animate = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+
+      // Smooth ease-out.
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const next = target * eased;
+
+      setValue(
+        Number(
+          next.toFixed(decimals)
+        )
+      );
+
+      if (progress < 1) {
+        frame = requestAnimationFrame(animate);
+      }
+    };
+
+    frame = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration, decimals, enabled]);
+
+  return value;
+}
+
+function Stat({
+  value,
+  suffix,
+  label,
+  decimals = 0,
+}: {
+  value: number;
+  suffix: string;
+  label: string;
+  decimals?: number;
+}) {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const count = useCountUp(value, 1300, decimals, visible);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.35 }
+    );
+
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="stat">
-      <div className="stat-n">{n.toLocaleString()}<span>{suffix}</span></div>
-      <div className="stat-l">{label}</div>
+    <div ref={ref} className="stat">
+      <div className="stat-value">
+        {count}
+        <span>{suffix}</span>
+      </div>
+
+      <div className="stat-label">{label}</div>
     </div>
   );
 }
 
 export default function LandingPage() {
   const router = useRouter();
-  const [num, setNum] = useState("");
-  const [statsOn, setStatsOn] = useState(false);
-  const sceneRef = useRef<HTMLDivElement>(null);
+
   const duskRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLElement>(null);
 
-  // scroll → day to dusk, ship drifts away (skipped for reduced motion)
+  const [trackingNumber, setTrackingNumber] = useState("");
+
   useEffect(() => {
-    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0;
-    const update = () => {
+
+    const updateDusk = () => {
       raf = 0;
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      const p = max > 0 ? Math.min(1, window.scrollY / max) : 0;
-      if (duskRef.current) duskRef.current.style.opacity = String(p * 0.4);
-      if (sceneRef.current && !calm)
-        sceneRef.current.style.transform = `translate3d(${-p * 60}px, ${-p * 24}px, 0) scale(1.08)`;
+
+      const maxScroll =
+        document.documentElement.scrollHeight - window.innerHeight;
+
+      const progress =
+        maxScroll > 0
+          ? Math.min(Math.max(window.scrollY / maxScroll, 0), 1)
+          : 0;
+
+      if (duskRef.current) {
+        // Day slowly turns toward dusk as the page progresses.
+        duskRef.current.style.opacity = String(progress * 0.78);
+      }
     };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    update();
+
+    const onScroll = () => {
+      if (!raf) {
+        raf = requestAnimationFrame(updateDusk);
+      }
+    };
+
+    updateDusk();
+
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.removeEventListener("scroll", onScroll); if (raf) cancelAnimationFrame(raf); };
+    window.addEventListener("resize", onScroll);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+
+      if (raf) {
+        cancelAnimationFrame(raf);
+      }
+    };
   }, []);
 
-  useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => e.isIntersecting && setStatsOn(true), { threshold: 0.4 });
-    if (statsRef.current) obs.observe(statsRef.current);
-    return () => obs.disconnect();
-  }, []);
+  const handleTrack = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-  const track = (e: FormEvent) => {
-    e.preventDefault();
-    const v = num.trim();
-    router.push(v ? `/track?n=${encodeURIComponent(v)}` : "/track");
+    const value = trackingNumber.trim();
+
+    if (!value) return;
+
+    router.push(`/track?n=${encodeURIComponent(value)}`);
   };
 
   return (
-    <div className="ss">
-      <style>{CSS}</style>
-
+    <main className="landing">
+      {/* 
+        The seascape is the whole site.
+        CargoSea owns the ship/parallax scroll animation.
+        This page owns the broader day → dusk transition.
+      */}
       <div className="scene" aria-hidden="true">
-        <div ref={sceneRef} className="scene-in"><CargoSea /></div>
+        <CargoSea />
         <div ref={duskRef} className="dusk" />
       </div>
 
-      <nav className="nav">
-        <Link href="/" className="brand">SwiftShip</Link>
-        <div className="nav-r">
-          <Link href="/track">Track</Link>
-          <Link href="/login">Sign in</Link>
-          <Link href="/register" className="btn btn-rust">Get started</Link>
-        </div>
-      </nav>
+      {/* NAV */}
+      <header className="nav-wrap">
+        <nav className="nav">
+          <Link href="/" className="brand" aria-label="Harbor home">
+            <span className="brand-mark">
+              <span />
+              <span />
+              <span />
+            </span>
 
-      <main>
-        {/* HERO — headline lives in the sky, ship sails below it */}
-        <section className="hero">
-          <div className="hero-copy">
-            <h1>Every package<br />leaves a wake.</h1>
-            <p>Book a pickup, get a tracking number, and follow your shipment checkpoint by checkpoint, from dock to doorstep.</p>
-            <form onSubmit={track} className="track">
-              <input value={num} onChange={(e) => setNum(e.target.value)} placeholder="Tracking number, e.g. SHP-M3A2-XQRP" aria-label="Tracking number" />
-              <button className="btn btn-ink" type="submit">Track</button>
-            </form>
-            <Link href="/register" className="hero-link">or book a pickup</Link>
+            <span className="brand-name">HARBOR</span>
+          </Link>
+
+          <div className="nav-links">
+            <a href="#features">CAPABILITIES</a>
+            <a href="#how-it-works">HOW IT WORKS</a>
+            <a href="#network">NETWORK</a>
           </div>
 
-          <div className="log" aria-label="Recent shipment activity">
-            <div className="log-track">
-              {[...FEED, ...FEED].map(([id, ev, loc, t], i) => (
-                <span key={i} className="log-item">
-                  <b>{id}</b> {ev} <i>{loc}</i> {t}
-                </span>
-              ))}
+          <Link href="/track" className="nav-cta">
+            TRACK SHIPMENT
+            <span>↗</span>
+          </Link>
+        </nav>
+      </header>
+
+      {/* HERO */}
+      <section className="hero">
+        <div className="hero-inner">
+          <div className="eyebrow">
+            <span className="eyebrow-dot" />
+            GLOBAL FREIGHT VISIBILITY
+          </div>
+
+          <h1>
+            MOVE CARGO.
+            <br />
+            <em>SEE EVERYTHING.</em>
+          </h1>
+
+          <p className="hero-copy">
+            Real-time shipment visibility across the world's ports,
+            terminals, and trade lanes.
+          </p>
+
+          <form className="track-form" onSubmit={handleTrack}>
+            <div className="track-input-wrap">
+              <span className="track-prefix">TRACK</span>
+
+              <input
+                value={trackingNumber}
+                onChange={(event) => setTrackingNumber(event.target.value)}
+                placeholder="Container or shipment number"
+                aria-label="Container or shipment number"
+                autoComplete="off"
+                spellCheck={false}
+              />
             </div>
-          </div>
-        </section>
 
-        {/* STATS */}
-        <section ref={statsRef} className="band">
-          <div className="wrap stats">
-            {STATS.map((s) => <Stat key={s.label} {...s} go={statsOn} />)}
-          </div>
-        </section>
+            <button type="submit">
+              <span>LOCATE CARGO</span>
+              <span className="button-arrow">→</span>
+            </button>
+          </form>
 
-        {/* FEATURES */}
-        <section className="band">
-          <div className="wrap">
-            <h2>Built for people who actually ship things</h2>
-            <div className="feat">
-              {FEATURES.map((f) => (
-                <div key={f.title} className="feat-i">
-                  <h3>{f.title}</h3>
-                  <p>{f.desc}</p>
+          <div className="hero-note">
+            <span>●</span>
+            AIS + PORT DATA + CARRIER EVENTS
+          </div>
+        </div>
+
+        <div className="hero-scroll">
+          <span>SCROLL TO EXPLORE</span>
+          <span className="scroll-line" />
+        </div>
+      </section>
+
+      {/* LIVE FEED */}
+      <section className="feed-section" id="network">
+        <div className="feed-header">
+          <div className="section-kicker">
+            <span />
+            LIVE NETWORK
+          </div>
+
+          <div className="feed-status">
+            <span className="live-dot" />
+            SIGNAL ACTIVE
+          </div>
+        </div>
+
+        <div className="feed-window">
+          <div className="feed-track">
+            {[...FEED, ...FEED].map((shipment, index) => (
+              <div className="feed-item" key={`${shipment.code}-${index}`}>
+                <div className="feed-code">
+                  {censorShipmentCode(shipment.code)}
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
-        {/* ROUTE */}
-        <section className="band">
-          <div className="wrap">
-            <h2>From booking to doorstep</h2>
-            <ol className="route">
-              {STEPS.map((s, i) => (
-                <li key={s.title}>
-                  <span className="dot">{i + 1}</span>
-                  <h3>{s.title}</h3>
-                  <p>{s.desc}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
+                <div className="feed-route">
+                  <span>{shipment.origin}</span>
+                  <i>→</i>
+                  <span>{shipment.destination}</span>
+                </div>
 
-        {/* CTA */}
-        <section className="band cta">
-          <div className="wrap">
-            <h2>Ready to start shipping?</h2>
-            <p>Create your free account and book your first shipment today. No credit card required.</p>
-            <div className="row">
-              <Link href="/register" className="btn btn-white">Create free account</Link>
-              <Link href="/login" className="btn btn-line">Sign in</Link>
-            </div>
-          </div>
-        </section>
-      </main>
+                <div className="feed-state">{shipment.status}</div>
 
-      <footer className="foot">
-        <span className="brand">SwiftShip</span>
-        <div>
-          {["Terms", "Privacy", "Contact"].map((l) => <a key={l} href="#">{l}</a>)}
-          <Link href="/track">Track a package</Link>
+                <div className="feed-eta">
+                  ETA <strong>{shipment.eta}</strong>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <small>&copy; 2026 SwiftShip. All rights reserved.</small>
+      </section>
+
+      {/* STATS */}
+      <section ref={statsRef} className="stats-band">
+        <div className="stats-grid">
+          {STATS.map((stat) => (
+            <Stat
+              key={stat.label}
+              value={stat.value}
+              suffix={stat.suffix}
+              label={stat.label}
+              decimals={stat.decimals}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section className="band features-section" id="features">
+        <div className="section-heading">
+          <div className="section-kicker">
+            <span />
+            BUILT FOR THE OCEAN
+          </div>
+
+          <h2>
+            CLARITY
+            <br />
+            <em>IN MOTION.</em>
+          </h2>
+
+          <p>
+            Freight doesn't stop when it leaves the terminal. Your visibility
+            shouldn't either.
+          </p>
+        </div>
+
+        <div className="features-grid">
+          {FEATURES.map((feature) => (
+            <article className="feature-card" key={feature.number}>
+              <div className="feature-number">{feature.number}</div>
+
+              <div className="feature-content">
+                <h3>{feature.title}</h3>
+                <p>{feature.text}</p>
+              </div>
+
+              <div className="feature-arrow">↗</div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section className="band steps-section" id="how-it-works">
+        <div className="steps-intro">
+          <div className="section-kicker">
+            <span />
+            HOW IT WORKS
+          </div>
+
+          <h2>
+            FROM
+            <br />
+            <em>DOCK TO DOOR.</em>
+          </h2>
+        </div>
+
+        <div className="steps-list">
+          {STEPS.map((step, index) => (
+            <div className="step" key={step.number}>
+              <div className="step-index">{step.number}</div>
+
+              <div className="step-main">
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
+              </div>
+
+              {index < STEPS.length - 1 && (
+                <div className="step-connector" />
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="cta-band">
+        <div className="cta-glow" />
+
+        <div className="cta-content">
+          <div className="section-kicker">
+            <span />
+            YOUR CARGO, CLEARER
+          </div>
+
+          <h2>
+            KNOW WHERE
+            <br />
+            <em>IT'S GOING.</em>
+          </h2>
+
+          <p>
+            One reference. One view. Every mile of the journey.
+          </p>
+
+          <Link href="/track" className="cta-button">
+            <span>TRACK A SHIPMENT</span>
+            <span>→</span>
+          </Link>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="footer">
+        <div className="footer-brand">
+          <span className="brand-mark">
+            <span />
+            <span />
+            <span />
+          </span>
+
+          <span className="brand-name">HARBOR</span>
+        </div>
+
+        <div className="footer-meta">
+          GLOBAL FREIGHT VISIBILITY
+        </div>
+
+        <div className="footer-links">
+          <a href="#">TERMS</a>
+          <a href="#">PRIVACY</a>
+          <a href="#">CONTACT</a>
+        </div>
+
+        <div className="footer-copy">
+          © {new Date().getFullYear()} HARBOR
+        </div>
       </footer>
-    </div>
+
+      <style jsx>{`
+        .landing {
+          position: relative;
+          min-height: 100vh;
+          overflow: clip;
+          background: #07131c;
+          color: #f3f1e8;
+        }
+
+        .scene {
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          pointer-events: none;
+          overflow: hidden;
+        }
+
+        .dusk {
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          pointer-events: none;
+          opacity: 0;
+          background:
+            linear-gradient(
+              180deg,
+              rgba(20, 32, 70, 0.15) 0%,
+              rgba(11, 28, 44, 0.38) 45%,
+              rgba(5, 17, 27, 0.76) 100%
+            );
+        }
+
+        .nav-wrap,
+        .hero,
+        .feed-section,
+        .band,
+        .stats-band,
+        .cta-band,
+        .footer {
+          position: relative;
+          z-index: 3;
+        }
+
+        .nav-wrap {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+        }
+
+        .nav {
+          width: min(1400px, calc(100% - 64px));
+          margin: 0 auto;
+          min-height: 86px;
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          align-items: center;
+          gap: 32px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        .brand {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+          width: fit-content;
+          color: inherit;
+          text-decoration: none;
+        }
+
+        .brand-name {
+          font-family: var(--font-display), Arial, sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+        }
+
+        .brand-mark {
+          width: 22px;
+          height: 20px;
+          display: flex;
+          align-items: flex-end;
+          gap: 3px;
+        }
+
+        .brand-mark span {
+          display: block;
+          width: 5px;
+          background: currentColor;
+          transform: skewX(-18deg);
+        }
+
+        .brand-mark span:nth-child(1) {
+          height: 11px;
+        }
+
+        .brand-mark span:nth-child(2) {
+          height: 16px;
+        }
+
+        .brand-mark span:nth-child(3) {
+          height: 20px;
+        }
+
+        .nav-links {
+          display: flex;
+          align-items: center;
+          gap: 34px;
+        }
+
+        .nav-links a,
+        .nav-cta,
+        .footer-links a {
+          color: inherit;
+          text-decoration: none;
+          font-family: var(--font-mono), monospace;
+          font-size: 10px;
+          letter-spacing: 0.14em;
+          transition: opacity 180ms ease;
+        }
+
+        .nav-links a:hover,
+        .footer-links a:hover {
+          opacity: 0.6;
+        }
+
+        .nav-cta {
+          justify-self: end;
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+          padding: 11px 15px;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          background: rgba(5, 15, 23, 0.18);
+        }
+
+        .nav-cta span {
+          font-size: 15px;
+        }
+
+        .hero {
+          min-height: 100svh;
+          display: flex;
+          align-items: center;
+          padding: 130px 32px 90px;
+        }
+
+        .hero-inner {
+          width: min(1400px, 100%);
+          margin: 0 auto;
+        }
+
+        .eyebrow,
+        .section-kicker {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          font-family: var(--font-mono), monospace;
+          font-size: 10px;
+          line-height: 1;
+          letter-spacing: 0.16em;
+          color: rgba(255, 255, 255, 0.68);
+        }
+
+        .eyebrow-dot,
+        .section-kicker span {
+          width: 5px;
+          height: 5px;
+          display: inline-block;
+          background: currentColor;
+          border-radius: 50%;
+        }
+
+        h1,
+        h2,
+        h3,
+        p {
+          margin: 0;
+        }
+
+        .hero h1 {
+          max-width: 980px;
+          margin-top: 24px;
+          font-family: var(--font-display), Arial, sans-serif;
+          font-size: clamp(62px, 10vw, 150px);
+          line-height: 0.84;
+          letter-spacing: -0.065em;
+          font-weight: 500;
+        }
+
+        .hero h1 em,
+        h2 em {
+          font-style: normal;
+          font-weight: 300;
+          color: rgba(255, 255, 255, 0.65);
+        }
+
+        .hero-copy {
+          max-width: 430px;
+          margin-top: 32px;
+          font-family: var(--font-body), Arial, sans-serif;
+          font-size: 16px;
+          line-height: 1.55;
+          color: rgba(255, 255, 255, 0.76);
+        }
+
+        .track-form {
+          width: min(690px, 100%);
+          display: grid;
+          grid-template-columns: 1fr auto;
+          margin-top: 36px;
+          padding: 5px;
+          border: 1px solid rgba(255, 255, 255, 0.28);
+          background: rgba(3, 14, 22, 0.35);
+          backdrop-filter: blur(12px);
+        }
+
+        .track-input-wrap {
+          display: flex;
+          align-items: center;
+          min-width: 0;
+        }
+
+        .track-prefix {
+          padding-left: 16px;
+          padding-right: 10px;
+          font-family: var(--font-mono), monospace;
+          font-size: 9px;
+          letter-spacing: 0.14em;
+          color: rgba(255, 255, 255, 0.45);
+        }
+
+        .track-form input {
+          width: 100%;
+          min-width: 0;
+          padding: 15px 8px;
+          border: 0;
+          outline: 0;
+          background: transparent;
+          color: #fff;
+          font-family: var(--font-mono), monospace;
+          font-size: 12px;
+          letter-spacing: 0.08em;
+        }
+
+        .track-form input::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+
+        .track-form button {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          padding: 0 20px;
+          border: 0;
+          background: #f1eee3;
+          color: #09151c;
+          cursor: pointer;
+          font-family: var(--font-mono), monospace;
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          transition:
+            transform 180ms ease,
+            background 180ms ease;
+        }
+
+        .track-form button:hover {
+          transform: translateX(2px);
+          background: #fff;
+        }
+
+        .button-arrow {
+          font-size: 17px;
+        }
+
+        .hero-note {
+          margin-top: 14px;
+          font-family: var(--font-mono), monospace;
+          font-size: 8px;
+          letter-spacing: 0.14em;
+          color: rgba(255, 255, 255, 0.42);
+        }
+
+        .hero-note span {
+          color: #b6d8bd;
+          margin-right: 7px;
+        }
+
+        .hero-scroll {
+          position: absolute;
+          bottom: 30px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          font-family: var(--font-mono), monospace;
+          font-size: 8px;
+          letter-spacing: 0.16em;
+          color: rgba(255, 255, 255, 0.42);
+        }
+
+        .scroll-line {
+          width: 1px;
+          height: 42px;
+          background: linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.65),
+            transparent
+          );
+        }
+
+        .feed-section {
+          padding: 22px 0;
+          background: rgba(5, 18, 27, 0.62);
+          border-top: 1px solid rgba(255, 255, 255, 0.12);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+          backdrop-filter: blur(8px);
+        }
+
+        .feed-header {
+          width: min(1400px, calc(100% - 64px));
+          margin: 0 auto 16px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .feed-status {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          font-family: var(--font-mono), monospace;
+          font-size: 8px;
+          letter-spacing: 0.14em;
+          color: rgba(255, 255, 255, 0.4);
+        }
+
+        .live-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: #b7d7bd;
+          box-shadow: 0 0 10px rgba(183, 215, 189, 0.8);
+        }
+
+        .feed-window {
+          overflow: hidden;
+        }
+
+        .feed-track {
+          width: max-content;
+          display: flex;
+          animation: tick 55s linear infinite;
+        }
+
+        .feed-item {
+          min-width: 420px;
+          padding: 4px 34px;
+          display: grid;
+          grid-template-columns: 100px 1fr 100px 90px;
+          align-items: center;
+          gap: 16px;
+          border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feed-code,
+        .feed-state,
+        .feed-eta,
+        .feed-route {
+          font-family: var(--font-mono), monospace;
+          font-size: 8px;
+          letter-spacing: 0.1em;
+          white-space: nowrap;
+        }
+
+        .feed-code {
+          color: rgba(255, 255, 255, 0.8);
+        }
+
+        .feed-route {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: rgba(255, 255, 255, 0.55);
+        }
+
+        .feed-route i {
+          font-style: normal;
+          color: rgba(255, 255, 255, 0.3);
+        }
+
+        .feed-state {
+          color: #aebfac;
+        }
+
+        .feed-eta {
+          color: rgba(255, 255, 255, 0.35);
+        }
+
+        .feed-eta strong {
+          color: rgba(255, 255, 255, 0.7);
+          font-weight: 400;
+        }
+
+        @keyframes tick {
+          to {
+            transform: translateX(-50%);
+          }
+        }
+
+        .stats-band {
+          background: rgba(6, 20, 29, 0.72);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+          backdrop-filter: blur(10px);
+        }
+
+        .stats-grid {
+          width: min(1400px, calc(100% - 64px));
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+        }
+
+        .stat {
+          min-height: 180px;
+          padding: 42px 30px;
+          border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat:first-child {
+          border-left: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+          font-family: var(--font-display), Arial, sans-serif;
+          font-size: clamp(44px, 5vw, 72px);
+          line-height: 0.9;
+          letter-spacing: -0.05em;
+        }
+
+        .stat-value span {
+          font-size: 0.42em;
+          margin-left: 4px;
+          color: rgba(255, 255, 255, 0.52);
+        }
+
+        .stat-label {
+          margin-top: 18px;
+          font-family: var(--font-mono), monospace;
+          font-size: 8px;
+          letter-spacing: 0.14em;
+          color: rgba(255, 255, 255, 0.38);
+        }
+
+        .band {
+          background: rgba(6, 18, 27, 0.82);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(14px);
+        }
+
+        .features-section {
+          padding: 130px max(32px, calc((100vw - 1400px) / 2));
+        }
+
+        .section-heading {
+          display: grid;
+          grid-template-columns: 1fr 1.4fr;
+          column-gap: 8vw;
+          align-items: end;
+        }
+
+        .section-heading .section-kicker {
+          align-self: start;
+        }
+
+        .section-heading h2,
+        .steps-intro h2,
+        .cta-content h2 {
+          font-family: var(--font-display), Arial, sans-serif;
+          font-size: clamp(58px, 8vw, 118px);
+          line-height: 0.84;
+          letter-spacing: -0.06em;
+          font-weight: 500;
+        }
+
+        .section-heading p {
+          grid-column: 2;
+          max-width: 390px;
+          margin-top: 28px;
+          font-size: 15px;
+          line-height: 1.6;
+          color: rgba(255, 255, 255, 0.55);
+        }
+
+        .features-grid {
+          margin-top: 90px;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          border-top: 1px solid rgba(255, 255, 255, 0.14);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        .feature-card {
+          min-height: 310px;
+          position: relative;
+          padding: 30px;
+          border-right: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .feature-card:first-child {
+          border-left: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .feature-number,
+        .step-index {
+          font-family: var(--font-mono), monospace;
+          font-size: 9px;
+          letter-spacing: 0.14em;
+          color: rgba(255, 255, 255, 0.35);
+        }
+
+        .feature-content {
+          position: absolute;
+          left: 30px;
+          right: 30px;
+          bottom: 34px;
+        }
+
+        .feature-content h3,
+        .step-main h3 {
+          font-family: var(--font-display), Arial, sans-serif;
+          font-size: 28px;
+          letter-spacing: -0.03em;
+          font-weight: 500;
+        }
+
+        .feature-content p,
+        .step-main p {
+          max-width: 330px;
+          margin-top: 12px;
+          font-size: 13px;
+          line-height: 1.65;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .feature-arrow {
+          position: absolute;
+          top: 28px;
+          right: 28px;
+          color: rgba(255, 255, 255, 0.35);
+        }
+
+        .steps-section {
+          padding: 130px max(32px, calc((100vw - 1400px) / 2));
+          display: grid;
+          grid-template-columns: 0.8fr 1.2fr;
+          gap: 10vw;
+        }
+
+        .steps-intro .section-kicker {
+          margin-bottom: 30px;
+        }
+
+        .steps-list {
+          border-top: 1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        .step {
+          position: relative;
+          display: grid;
+          grid-template-columns: 60px 1fr;
+          gap: 24px;
+          padding: 34px 0;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .step-main p {
+          max-width: 420px;
+        }
+
+        .cta-band {
+          position: relative;
+          min-height: 700px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          background: rgba(4, 16, 25, 0.82);
+          backdrop-filter: blur(12px);
+        }
+
+        .cta-glow {
+          position: absolute;
+          width: 60vw;
+          height: 60vw;
+          max-width: 900px;
+          max-height: 900px;
+          border-radius: 50%;
+          background: radial-gradient(
+            circle,
+            rgba(101, 137, 143, 0.18),
+            transparent 65%
+          );
+          filter: blur(20px);
+        }
+
+        .cta-content {
+          position: relative;
+          z-index: 1;
+          text-align: center;
+        }
+
+        .cta-content .section-kicker {
+          justify-content: center;
+        }
+
+        .cta-content h2 {
+          margin-top: 30px;
+        }
+
+        .cta-content p {
+          margin: 30px auto 0;
+          max-width: 430px;
+          color: rgba(255, 255, 255, 0.52);
+          font-size: 15px;
+        }
+
+        .cta-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 35px;
+          margin-top: 35px;
+          padding: 17px 21px;
+          background: #f1eee3;
+          color: #09151c;
+          text-decoration: none;
+          font-family: var(--font-mono), monospace;
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          transition:
+            transform 180ms ease,
+            background 180ms ease;
+        }
+
+        .cta-button:hover {
+          transform: translateY(-2px);
+          background: #fff;
+        }
+
+        .cta-button span:last-child {
+          font-size: 17px;
+        }
+
+        .footer {
+          min-height: 100px;
+          padding: 25px max(32px, calc((100vw - 1400px) / 2));
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          align-items: center;
+          gap: 30px;
+          background: rgba(3, 12, 19, 0.94);
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-meta,
+        .footer-copy {
+          font-family: var(--font-mono), monospace;
+          font-size: 8px;
+          letter-spacing: 0.13em;
+          color: rgba(255, 255, 255, 0.32);
+        }
+
+        .footer-links {
+          justify-self: end;
+          display: flex;
+          gap: 22px;
+        }
+
+        .footer-copy {
+          display: none;
+        }
+
+        @media (max-width: 900px) {
+          .nav {
+            width: min(100% - 36px, 1400px);
+            grid-template-columns: 1fr auto;
+          }
+
+          .nav-links {
+            display: none;
+          }
+
+          .hero {
+            padding-left: 18px;
+            padding-right: 18px;
+          }
+
+          .hero h1 {
+            font-size: clamp(58px, 17vw, 105px);
+          }
+
+          .feed-header,
+          .stats-grid {
+            width: calc(100% - 36px);
+          }
+
+          .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .stat:nth-child(3) {
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+          }
+
+          .section-heading,
+          .steps-section {
+            grid-template-columns: 1fr;
+          }
+
+          .section-heading p {
+            grid-column: auto;
+          }
+
+          .features-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .feature-card {
+            min-height: 270px;
+            border-left: 1px solid rgba(255, 255, 255, 0.12);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+          }
+
+          .feature-card:last-child {
+            border-bottom: 0;
+          }
+
+          .steps-section {
+            gap: 70px;
+          }
+
+          .footer {
+            grid-template-columns: 1fr auto;
+          }
+
+          .footer-meta {
+            display: none;
+          }
+        }
+
+        @media (max-width: 620px) {
+          .nav {
+            min-height: 72px;
+          }
+
+          .nav-cta {
+            padding: 9px 11px;
+            font-size: 8px;
+          }
+
+          .hero {
+            min-height: 100svh;
+            padding-top: 105px;
+            padding-bottom: 75px;
+          }
+
+          .hero h1 {
+            font-size: clamp(52px, 16vw, 82px);
+          }
+
+          .hero-copy {
+            font-size: 14px;
+          }
+
+          .track-form {
+            grid-template-columns: 1fr;
+            padding: 5px;
+          }
+
+          .track-form button {
+            min-height: 48px;
+            justify-content: space-between;
+          }
+
+          .hero-scroll {
+            display: none;
+          }
+
+          .feed-item {
+            min-width: 340px;
+            grid-template-columns: 85px 1fr 80px;
+          }
+
+          .feed-eta {
+            display: none;
+          }
+
+          .stats-grid {
+            width: 100%;
+          }
+
+          .stat {
+            min-height: 150px;
+            padding: 30px 20px;
+          }
+
+          .features-section,
+          .steps-section {
+            padding: 90px 20px;
+          }
+
+          .section-heading h2,
+          .steps-intro h2,
+          .cta-content h2 {
+            font-size: clamp(55px, 16vw, 90px);
+          }
+
+          .features-grid {
+            margin-top: 60px;
+          }
+
+          .cta-band {
+            min-height: 580px;
+            padding: 30px 20px;
+          }
+
+          .footer {
+            padding: 24px 20px;
+          }
+
+          .footer-links {
+            gap: 12px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .feed-track {
+            animation: none;
+          }
+
+          .track-form button,
+          .cta-button {
+            transition: none;
+          }
+        }
+      `}</style>
+    </main>
   );
 }
-
-const CSS = `
-.ss{--ink:#10283C;--sea:#2E6286;--rust:#C0654A;--mist:#EAF1F6;--glass:rgba(12,32,50,.5);
-  font-family:var(--font-body),system-ui,sans-serif;color:var(--mist);position:relative;overflow-x:hidden}
-.ss a{color:inherit;text-decoration:none}
-.ss h1,.ss h2,.ss h3,.brand{font-family:var(--font-display),'Arial Narrow',sans-serif;font-weight:600;margin:0;letter-spacing:-.005em}
-.scene{position:fixed;inset:0;z-index:0;overflow:hidden;background:#DCE5EE}
-.scene-in{position:absolute;inset:0;will-change:transform;transform-origin:70% 60%}
-.scene .bg-skyline{width:100%;height:100%;display:block}
-.dusk{position:absolute;inset:0;opacity:0;background:linear-gradient(#3A4A78,#12263C)}
-.nav{position:fixed;top:12px;left:16px;right:16px;z-index:50;height:54px;padding:0 10px 0 24px;display:flex;align-items:center;justify-content:space-between;
-  background:rgba(255,255,255,.55);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.6);border-radius:999px;color:var(--ink)}
-.brand{font-size:24px;color:var(--ink)}
-.nav-r{display:flex;align-items:center;gap:4px}
-.nav-r a{font-size:14px;font-weight:500;padding:8px 14px;color:#2F4558;border-radius:999px}
-.nav-r a:hover{background:rgba(255,255,255,.6)}
-.btn{display:inline-block;font-weight:600;font-size:15px;border-radius:999px;padding:13px 28px;border:1.5px solid transparent;cursor:pointer;font-family:inherit}
-.nav-r .btn{padding:9px 20px;font-size:14px;color:#fff}
-.btn-rust{background:var(--rust)}.btn-rust:hover{background:#a85339}
-.btn-ink{background:var(--ink);color:#fff}.btn-ink:hover{background:#1b4060}
-.btn-white{background:#fff;color:var(--ink)}
-.btn-line{border-color:rgba(255,255,255,.7);color:#fff}
-.btn:focus-visible,.ss input:focus-visible,.ss a:focus-visible{outline:2px solid #fff;outline-offset:2px}
-.hero{position:relative;min-height:100svh;padding:70px 40px 0;display:flex;flex-direction:column}
-.hero-copy{max-width:620px;margin-top:10vh;color:var(--ink)}
-.hero h1{font-size:clamp(48px,7.5vw,96px);line-height:1}
-.hero p{font-size:17px;line-height:1.6;color:var(--ink);max-width:470px;margin:20px 0 22px;padding:14px 20px;background:rgba(255,255,255,.12);backdrop-filter:blur(14px);border-radius:22px}
-.track{display:flex;max-width:520px;padding:6px;background:rgba(255,255,255,.85);border-radius:999px;box-shadow:0 14px 36px rgba(16,40,60,.16)}
-.track input{flex:1;min-width:0;padding:10px 18px;font:14px var(--font-mono),monospace;border:0;background:transparent;color:var(--ink)}
-.track input:focus-visible{outline:none}
-.hero-link{display:inline-block;margin:16px 0 0;font-size:14px;font-weight:600;color:var(--ink);padding:8px 16px;background:rgba(255,255,255,.72);backdrop-filter:blur(14px);border-radius:999px}
-.log{position:absolute;left:20px;right:20px;bottom:20px;overflow:hidden;background:rgba(12,32,50,.45);backdrop-filter:blur(10px);border-radius:999px;padding:11px 0}
-.log-track{display:flex;width:max-content;animation:tick 40s linear infinite}
-.log-item{font:11px var(--font-mono),monospace;color:rgba(255,255,255,.8);padding:0 26px;white-space:nowrap}
-.log-item b{color:#fff}.log-item i{font-style:normal;color:#BFE0F2}
-@keyframes tick{to{transform:translateX(-50%)}}
-.band{position:relative;padding:9vh 20px}
-.wrap{max-width:1040px;margin:0 auto;padding:52px;background:var(--glass);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.2);border-radius:32px}
-.band h2{font-size:clamp(30px,4vw,44px);margin-bottom:36px;line-height:1.1}
-.band p{line-height:1.65;color:rgba(234,241,246,.85);margin:0}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
-.stat{padding:4px 0}
-.stat-n{font:500 38px var(--font-mono),monospace;color:#fff}.stat-n span{color:#F4B496}
-.stat-l{font-size:14px;color:rgba(234,241,246,.75);margin-top:6px}
-.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.feat-i{background:rgba(255,255,255,.08);border-radius:22px;padding:24px}
-.ss h3{font-size:22px;margin-bottom:10px;color:#fff}
-.feat p,.route p{font-size:15px}
-.route{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:32px;position:relative}
-.route::before{content:"";position:absolute;top:19px;left:20px;right:20px;border-top:2px dotted rgba(255,255,255,.4)}
-.route li{position:relative}
-.dot{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;margin-bottom:18px;
-  background:#fff;font:600 14px var(--font-mono),monospace;color:var(--ink)}
-.cta .wrap{max-width:640px;text-align:center;background:rgba(192,101,74,.82);border-color:rgba(255,255,255,.3)}
-.cta p{color:rgba(255,255,255,.92);max-width:480px;margin:0 auto 28px}
-.cta h2{margin-bottom:14px}
-.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.foot{position:relative;margin:0 16px 16px;background:rgba(12,32,50,.6);backdrop-filter:blur(14px);border-radius:28px;padding:28px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
-.foot div{display:flex;gap:24px;flex-wrap:wrap}.foot a{font-size:13px;color:rgba(255,255,255,.7)}.foot a:hover{color:#fff}
-.foot small{font:11px var(--font-mono),monospace;color:rgba(255,255,255,.5)}
-@media(max-width:760px){
-  .nav{left:10px;right:10px;padding-left:18px}.nav-r a:not(.btn){display:none}
-  .hero{padding:70px 20px 0}.band{padding:6vh 12px}.wrap{padding:28px 22px;border-radius:26px}
-  .stats{grid-template-columns:1fr 1fr}.feat,.route{grid-template-columns:1fr}.route::before{display:none}
-  .log{left:12px;right:12px}
-}
-@media(prefers-reduced-motion:reduce){.log-track{animation:none}}
-`;
