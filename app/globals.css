@@ -1,39 +1,42 @@
-/* ─── Design Tokens ─────────────────────────────── */
+/* ─── Design Tokens — "harbor" palette ───────────────
+   Matches the seascape landing page: deep navy ink, sea blue,
+   container rust, misty sky surfaces, soft rounded shapes. */
 :root {
-  --font-display: "Big Shoulders Display Variable";
-  --font-body: "IBM Plex Sans";
-  --font-mono: "IBM Plex Mono";
-  --font-syne: "Syne";
-  --font-inter: "Inter";
+  /* Fonts (loaded in app/layout.tsx via @fontsource) */
+  --font-display: "Big Shoulders Display Variable", "Arial Narrow", sans-serif;
+  --font-body:    "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono:    "IBM Plex Mono", "Courier New", monospace;
+  --font-syne:    "Syne";
+  --font-inter:   "Inter";
+  --font-sans:    var(--font-body);
 
+  /* Brand — container rust */
+  --color-primary:        #C0654A;
+  --color-primary-light:  #F4B496;
+  --color-primary-dark:   #9C4730;
+  --color-primary-border: #E9B7A4;
 
-  /* Brand — route red replaces the old blue */
-  --color-primary:        #B23A2E;
-  --color-primary-light:  #f08175;
-  --color-primary-dark:   #6E1111;
-  --color-primary-border: ##EF9595;
+  /* Secondary accent — sea blue (name kept so existing classes still work) */
+  --color-accent-teal:       #2E6286;
+  --color-accent-teal-light: #DCE8F0;
 
-  /* Secondary accent — customs teal */
-  --color-accent-teal:       #178F87;
-  --color-accent-teal-light: #DCEFEC;
+  /* Ink / text */
+  --color-ink:         #10283C;
+  --color-heading:     #10283C;
+  --color-body:        #34495C;
+  --color-muted:       #5B6F80;
+  --color-subtle:      #8798A8;
+  --color-placeholder: #AEBBC7;
 
-  /* Neutral / ink — text only now (no longer doubles as a page background) */
-  --color-ink:         #161D29;
-  --color-heading:     #1B2330;
-  --color-body:        #3E4654;
-  --color-muted:       #5B6472;
-  --color-subtle:      #828C99;
-  --color-placeholder: #ADB5BE;
-
-  /* Surfaces — paper world */
-  --color-bg:            #BCD4E4;
-  --color-surface:       #FBFCF8;
-  --color-surface-alt:   #F4F5EF;
-  --color-surface-hover: #E3E6D9;
+  /* Surfaces — misty sky */
+  --color-bg:            #DCE7F0;
+  --color-surface:       #F8FBFD;
+  --color-surface-alt:   #EEF3F8;
+  --color-surface-hover: #E1EAF2;
 
   /* Borders */
-  --color-border:       #D8DCD1;
-  --color-border-light: #E5E8DC;
+  --color-border:       #D3DEE8;
+  --color-border-light: #E3EBF2;
 
   /* Feedback */
   --color-success-text:   #1F7A52;
@@ -44,9 +47,9 @@
   --color-error-bg:     #F7E0DB;
   --color-error-border: #E9C3B6;
 
-  --color-info-text:   #0E6E68;
-  --color-info-bg:     #DCEFEC;
-  --color-info-border: #BFE0DC;
+  --color-info-text:   #1F5578;
+  --color-info-bg:     #DCE8F0;
+  --color-info-border: #BDD3E3;
 
   --color-warn-text:   #B45309;
   --color-warn-bg:     #FBE9C7;
@@ -57,22 +60,22 @@
   --status-pending-bg:   #FBE9C7;
   --status-pending-dot:  #E08B2E;
 
-  /* Status — Confirmed (neutral ink — decoupled from "blue = primary") */
-  --status-confirmed-text: #4B5360;
-  --status-confirmed-bg:   #E7E9DE;
-  --status-confirmed-dot:  #828C99;
+  /* Status — Confirmed */
+  --status-confirmed-text: #4A5F73;
+  --status-confirmed-bg:   #E3EBF2;
+  --status-confirmed-dot:  #8798A8;
 
-  /* Status — Picked Up */
-  --status-picked-text: #6D28D9;
-  --status-picked-bg:   #ECE4FB;
-  --status-picked-dot:  #9061E0;
+  /* Status — Picked Up (container blue) */
+  --status-picked-text: #2F5F94;
+  --status-picked-bg:   #DDE8F5;
+  --status-picked-dot:  #4A82BF;
 
-  /* Status — In Transit (cool tone — free to use now that blue isn't brand) */
+  /* Status — In Transit (sea teal) */
   --status-transit-text: #0E7490;
   --status-transit-bg:   #DCEFF2;
   --status-transit-dot:  #1AA6C4;
 
-  /* Status — Out for Delivery (deeper variant of route orange) */
+  /* Status — Out for Delivery (deeper rust) */
   --status-ofd-text: #B14B1F;
   --status-ofd-bg:   #FBDFCB;
   --status-ofd-dot:  #E8632A;
@@ -88,56 +91,75 @@
   --status-failed-dot:  #C9483A;
 
   /* Status — Cancelled / Returned */
-  --status-neutral-text: #4B5360;
-  --status-neutral-bg:   #E7E9DE;
-  --status-neutral-dot:  #97A0AC;
+  --status-neutral-text: #4A5F73;
+  --status-neutral-bg:   #E3EBF2;
+  --status-neutral-dot:  #97A5B3;
 
   /* Service types */
-  --service-standard-text:  #4B5360;
-  --service-standard-bg:    #F4F6EF;
+  --service-standard-text:  #4A5F73;
+  --service-standard-bg:    #EEF3F8;
   --service-express-text:   #0E7490;
   --service-express-bg:     #DCEFF2;
-  --service-overnight-text: #6D28D9;
-  --service-overnight-bg:   #ECE4FB;
+  --service-overnight-text: #2F5F94;
+  --service-overnight-bg:   #DDE8F5;
   --service-freight-text:   #B45309;
   --service-freight-bg:     #FBE9C7;
 
-  /* Nav — now light, blends into the page rather than a separate dark bar */
-  --color-nav-bg:         var(--color-bg);
-  --color-nav-border:     var(--color-border);
-  --color-nav-text:       var(--color-muted);
+  /* Nav — frosted glass, like the landing page */
+  --color-nav-bg:         rgba(255, 255, 255, 0.6);
+  --color-nav-border:     rgba(255, 255, 255, 0.7);
+  --color-nav-text:       #2F4558;
   --color-nav-text-hover: var(--color-ink);
 
   /* Sidebar (admin) */
   --color-sidebar-bg:     var(--color-surface);
   --color-sidebar-border: var(--color-border);
 
-  /* Navy — the one contained dark surface in the system (e.g. a "live board"
-     style component). Not page backgrounds — kept deliberately rare. */
-  --color-navy-bg:          #101620;
-  --color-navy-border:      #283242;
-  --color-navy-text:        #E4E8EE;
-  --color-navy-text-muted:  #8FA0B8;
+  /* Navy — the one contained dark surface (live boards etc.) */
+  --color-navy-bg:          #0C2032;
+  --color-navy-border:      #24425C;
+  --color-navy-text:        #E4EEF5;
+  --color-navy-text-muted:  #8FB0C8;
 
-  /* Typography
-     NOTE: changing these variables alone isn't enough — whatever loads Syne /
-     JetBrains Mono today (likely next/font/google in your root layout) needs
-     to load Space Grotesk / IBM Plex Mono instead, with a matching variable
-     name, or this will silently fall back to system fonts. */
-  --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-display: var(--font-space-grotesk), sans-serif;
-  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  /* Radius — softer */
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+  --radius-pill: 999px;
 
-  /* Radius */
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  14px;
-  --radius-xl:  20px;
+  /* Shadows — blue-tinted */
+  --shadow-sm: 0 1px 3px rgba(16, 40, 60, 0.07);
+  --shadow-md: 0 6px 20px rgba(16, 40, 60, 0.08);
+  --shadow-lg: 0 16px 44px rgba(16, 40, 60, 0.14);
+}
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.10);
+/* ─── Base ───────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-body);
+  background: linear-gradient(180deg, #E8F0F6 0%, #C9DBE8 100%) fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-teal);
+  outline-offset: 2px;
+}
+
+/* Frosted panel — use on app cards/panels to match the landing page */
+.glass {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-xl);
 }
 
 /* ─── Print ──────────────────────────────────────── */
@@ -149,13 +171,7 @@
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
-
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+/* ─── Animations ─────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(22px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -194,7 +210,7 @@
 .feat-card { transition: transform 0.2s, box-shadow 0.2s; }
 .feat-card:hover {
   transform: translateY(-5px) !important;
-  box-shadow: 0 16px 40px rgba(255, 106, 44, 0.14) !important;
+  box-shadow: var(--shadow-lg) !important;
 }
 
 .btn-p:hover  { background: var(--color-primary-dark) !important; }
@@ -205,8 +221,7 @@
 
 .tracker-input::placeholder { color: var(--color-placeholder); }
 
-/* Step labels under the route progress line — drop on narrow screens rather
-   than wrap awkwardly; the line + badge + From/To already carry the meaning */
+/* Step labels under the route progress line */
 @media (max-width: 480px) {
   .route-step-labels { display: none; }
 }
