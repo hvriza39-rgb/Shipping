@@ -1,6 +1,34 @@
 // components/CargoSea.tsx
-// Premium procedural container-ship seascape.
-// Designed as a hero background for a shipping/logistics website.
+//
+// Procedural container-ship seascape.
+// No external assets.
+//
+// Features:
+// - Atmospheric sky and sea
+// - Distant port skyline
+// - Container ship initially far away
+// - Scroll-driven ship approach
+// - Multi-layer parallax
+// - Growing bow wake
+// - Smooth requestAnimationFrame updates
+// - prefers-reduced-motion support
+//
+// Usage:
+//
+// <section className="relative min-h-[100svh] overflow-hidden">
+//   <CargoSea />
+//   <div className="relative z-10">
+//     {/* Hero content */}
+//   </div>
+// </section>
+
+"use client";
+
+import {
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 
 const W = 1440;
 const H = 600;
@@ -9,20 +37,36 @@ const HZ = 330;
 function rng(seed: number) {
   return () => {
     seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+
+    let t = Math.imul(
+      seed ^ (seed >>> 15),
+      1 | seed
+    );
+
+    t =
+      (t +
+        Math.imul(
+          t ^ (t >>> 7),
+          61 | t
+        )) ^
+      t;
+
+    return (
+      ((t ^ (t >>> 14)) >>> 0) /
+      4294967296
+    );
   };
 }
 
-const n1 = (v: number) => Math.round(v * 10) / 10;
+const n1 = (v: number) =>
+  Math.round(v * 10) / 10;
 
 function build() {
   const rand = rng(11);
 
-  // ------------------------------------------------------------
+  // ============================================================
   // SEA WAVES
-  // ------------------------------------------------------------
+  // ============================================================
 
   const waveColors = [
     "#AFCFE1",
@@ -31,41 +75,63 @@ function build() {
     "#DDEAF2",
   ];
 
-  const weights = [0.30, 0.40, 0.22, 0.08];
-  const waves = new Map<string, string>();
+  const weights = [
+    0.30,
+    0.40,
+    0.22,
+    0.08,
+  ];
 
-  // Fewer waves near horizon, longer/larger waves toward camera.
+  const waves = new Map<
+    string,
+    string
+  >();
+
   const rows = 58;
 
   for (let k = 0; k < rows; k++) {
-    const t = k / (rows - 1);
+    const t =
+      k / (rows - 1);
 
     const y =
       HZ +
       5 +
-      Math.pow(t, 1.7) * (H - HZ - 8);
+      Math.pow(t, 1.7) *
+        (H - HZ - 8);
 
     const spacing =
       8 +
-      Math.pow(t, 1.45) * 38;
+      Math.pow(t, 1.45) *
+        38;
 
     for (
-      let x = rand() * spacing - 30;
+      let x =
+        rand() * spacing - 30;
       x < W + 30;
-      x += spacing * (0.65 + rand() * 0.8)
+      x +=
+        spacing *
+        (0.65 + rand() * 0.8)
     ) {
       let r = rand();
       let i = 0;
       let a = weights[0];
 
-      while (r > a && i < weights.length - 1) {
+      while (
+        r > a &&
+        i < weights.length - 1
+      ) {
         a += weights[++i];
       }
 
-      // Keep the horizon intentionally quiet.
-      const densityFade = 0.25 + t * 0.75;
+      // Keep the horizon relatively quiet.
+      const densityFade =
+        0.25 + t * 0.75;
 
-      if (rand() > densityFade) continue;
+      if (
+        rand() > densityFade
+      ) {
+        continue;
+      }
 
       const len =
         (3 + t * 30) *
@@ -94,14 +160,16 @@ function build() {
       waves.set(
         key,
         (waves.get(key) ?? "") +
-          `M${n1(x)} ${n1(yy)}h${n1(len)}`
+          `M${n1(x)} ${n1(
+            yy
+          )}h${n1(len)}`
       );
     }
   }
 
-  // ------------------------------------------------------------
+  // ============================================================
   // DISTANT CITY / PORT
-  // ------------------------------------------------------------
+  // ============================================================
 
   const sky = ["", ""];
 
@@ -112,35 +180,46 @@ function build() {
     [20, 8, 44],
   ];
 
-  const buildings: number[][] = [...spires];
+  const buildings: number[][] = [
+    ...spires,
+  ];
 
   for (
     let x = 10;
     x < 690;
     x += 5 + rand() * 12
   ) {
-    const falloff = x > 520 ? 0.6 : 1;
+    const falloff =
+      x > 520 ? 0.6 : 1;
 
     buildings.push([
       x,
       6 + rand() * 14,
-      (8 + rand() * 30) * falloff,
+      (8 + rand() * 30) *
+        falloff,
     ]);
   }
 
-  const wins: string[] = ["", ""];
+  const wins: string[] = [
+    "",
+    "",
+  ];
 
   for (const [x, w, h] of buildings) {
-    const layer = rand() < 0.5 ? 0 : 1;
+    const layer =
+      rand() < 0.5 ? 0 : 1;
 
     sky[layer] +=
-      `M${n1(x)} ${HZ + 1}` +
+      `M${n1(x)} ${
+        HZ + 1
+      }` +
       `v${-n1(h)}` +
       `h${n1(w)}` +
       `v${n1(h)}z`;
 
     for (
-      let wy = HZ - h + 4;
+      let wy =
+        HZ - h + 4;
       wy < HZ - 3;
       wy += 5
     ) {
@@ -150,16 +229,22 @@ function build() {
         wx += 4
       ) {
         if (rand() < 0.28) {
-          wins[rand() < 0.5 ? 0 : 1] +=
-            `M${n1(wx)} ${n1(wy)}h1.5`;
+          wins[
+            rand() < 0.5
+              ? 0
+              : 1
+          ] +=
+            `M${n1(
+              wx
+            )} ${n1(wy)}h1.5`;
         }
       }
     }
   }
 
-  // ------------------------------------------------------------
+  // ============================================================
   // CONTAINERS
-  // ------------------------------------------------------------
+  // ============================================================
 
   const containerColors = [
     "#B85D43",
@@ -170,7 +255,10 @@ function build() {
     "#A84F3A",
   ];
 
-  const stacks = new Map<string, string>();
+  const stacks = new Map<
+    string,
+    string
+  >();
 
   const cw = 18;
   const ch = 10;
@@ -195,7 +283,11 @@ function build() {
       )
     );
 
-    for (let r = 0; r < rowsN; r++) {
+    for (
+      let r = 0;
+      r < rowsN;
+      r++
+    ) {
       const color =
         containerColors[
           Math.floor(
@@ -221,32 +313,310 @@ function build() {
   }
 
   return {
-    waves: Array.from(waves.entries()),
+    waves: Array.from(
+      waves.entries()
+    ),
     sky,
     wins,
-    stacks: Array.from(stacks.entries()),
+    stacks:
+      Array.from(
+        stacks.entries()
+      ),
   };
 }
 
-const {
-  waves,
-  sky,
-  wins,
-  stacks,
-} = build();
-
 export default function CargoSea() {
+  /*
+   * useMemo ensures the procedural geometry is
+   * generated once for this component instance.
+   */
+  const scene = useMemo(
+    () => build(),
+    []
+  );
+
+  const svgRef =
+    useRef<SVGSVGElement | null>(
+      null
+    );
+
+  const shipRef =
+    useRef<SVGGElement | null>(
+      null
+    );
+
+  const cloudsFarRef =
+    useRef<SVGGElement | null>(
+      null
+    );
+
+  const cloudsNearRef =
+    useRef<SVGGElement | null>(
+      null
+    );
+
+  const skylineRef =
+    useRef<SVGGElement | null>(
+      null
+    );
+
+  const cranesRef =
+    useRef<SVGGElement | null>(
+      null
+    );
+
+  const waterRef =
+    useRef<SVGGElement | null>(
+      null
+    );
+
+  const wakeRef =
+    useRef<SVGGElement | null>(
+      null
+    );
+
+  useEffect(() => {
+    const svg =
+      svgRef.current;
+
+    const ship =
+      shipRef.current;
+
+    if (!svg || !ship) {
+      return;
+    }
+
+    const reduceMotion =
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      );
+
+    let frame = 0;
+
+    /*
+     * Interpolate toward the target instead of directly
+     * applying scroll position.
+     *
+     * This creates a subtle "physical" feeling:
+     * the ship appears to follow the user rather than
+     * being mechanically attached to the scrollbar.
+     */
+    let current = 0;
+
+    const update = () => {
+      frame = 0;
+
+      const heroHeight =
+        Math.max(
+          window.innerHeight * 1.05,
+          600
+        );
+
+      const raw =
+        window.scrollY /
+        heroHeight;
+
+      const target =
+        Math.min(
+          1,
+          Math.max(0, raw)
+        );
+
+      if (
+        reduceMotion.matches
+      ) {
+        current = 0;
+
+        ship.setAttribute(
+          "transform",
+          "translate(0 42) scale(.68)"
+        );
+
+        wakeRef.current?.setAttribute(
+          "opacity",
+          "0.55"
+        );
+
+        return;
+      }
+
+      // Smoothly catch up to scroll.
+      current +=
+        (target - current) *
+        0.075;
+
+      /*
+       * Ship
+       *
+       * Starts around 68% scale and approaches
+       * roughly 95%.
+       */
+      const scale =
+        0.68 +
+        current * 0.27;
+
+      /*
+       * Small vertical movement.
+       *
+       * The ship rises slightly as it approaches.
+       */
+      const y =
+        42 -
+        current * 42;
+
+      /*
+       * Small horizontal movement.
+       *
+       * This keeps the ship from feeling like it is
+       * simply zooming in place.
+       */
+      const x =
+        current * -18;
+
+      /*
+       * SVG transform order:
+       *
+       * translate first, then scale.
+       */
+      ship.setAttribute(
+        "transform",
+        `translate(${x} ${y}) scale(${scale})`
+      );
+
+      // --------------------------------------------------------
+      // Clouds
+      // --------------------------------------------------------
+
+      cloudsFarRef.current?.setAttribute(
+        "transform",
+        `translate(${
+          current * -10
+        } ${current * 2})`
+      );
+
+      cloudsNearRef.current?.setAttribute(
+        "transform",
+        `translate(${
+          current * -24
+        } ${current * 4})`
+      );
+
+      // --------------------------------------------------------
+      // Skyline
+      // --------------------------------------------------------
+
+      skylineRef.current?.setAttribute(
+        "transform",
+        `translate(${
+          current * -8
+        } ${current * 2})`
+      );
+
+      // --------------------------------------------------------
+      // Port cranes
+      // --------------------------------------------------------
+
+      cranesRef.current?.setAttribute(
+        "transform",
+        `translate(${
+          current * -16
+        } ${current * 3})`
+      );
+
+      // --------------------------------------------------------
+      // Water
+      // --------------------------------------------------------
+
+      waterRef.current?.setAttribute(
+        "transform",
+        `translate(0 ${
+          current * -3
+        })`
+      );
+
+      // --------------------------------------------------------
+      // Wake
+      // --------------------------------------------------------
+
+      /*
+       * The wake becomes more pronounced as the ship
+       * approaches.
+       */
+      const wakeOpacity =
+        0.45 +
+        current * 0.45;
+
+      wakeRef.current?.setAttribute(
+        "opacity",
+        String(wakeOpacity)
+      );
+    };
+
+    const onScroll = () => {
+      if (!frame) {
+        frame =
+          requestAnimationFrame(
+            update
+          );
+      }
+    };
+
+    const onMotionChange =
+      () => {
+        if (!frame) {
+          frame =
+            requestAnimationFrame(
+              update
+            );
+        }
+      };
+
+    window.addEventListener(
+      "scroll",
+      onScroll,
+      {
+        passive: true,
+      }
+    );
+
+    reduceMotion.addEventListener(
+      "change",
+      onMotionChange
+    );
+
+    update();
+
+    return () => {
+      window.removeEventListener(
+        "scroll",
+        onScroll
+      );
+
+      reduceMotion.removeEventListener(
+        "change",
+        onMotionChange
+      );
+
+      if (frame) {
+        cancelAnimationFrame(
+          frame
+        );
+      }
+    };
+  }, []);
+
   return (
     <svg
-      className="bg-skyline"
+      ref={svgRef}
+      className="bg-skyline pointer-events-none absolute inset-0 h-full w-full"
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="xMidYMax slice"
       aria-hidden="true"
     >
       <defs>
-        {/* -------------------------------------------------- */}
-        {/* SKY                                                  */}
-        {/* -------------------------------------------------- */}
+        {/* ================================================== */}
+        {/* SKY                                                 */}
+        {/* ================================================== */}
 
         <linearGradient
           id="cs-sky"
@@ -259,21 +629,25 @@ export default function CargoSea() {
             offset="0"
             stopColor="#C9D9E6"
           />
+
           <stop
             offset=".42"
             stopColor="#E4EDF4"
           />
+
           <stop
             offset=".78"
             stopColor="#F2F6FA"
           />
+
           <stop
             offset="1"
             stopColor="#F8FAFC"
           />
         </linearGradient>
 
-        {/* Soft sunlight / atmospheric glow */}
+        {/* Sun / atmospheric glow */}
+
         <radialGradient
           id="cs-light"
           cx="19%"
@@ -285,11 +659,13 @@ export default function CargoSea() {
             stopColor="#FFFFFF"
             stopOpacity=".78"
           />
+
           <stop
             offset=".45"
             stopColor="#FFFFFF"
             stopOpacity=".25"
           />
+
           <stop
             offset="1"
             stopColor="#FFFFFF"
@@ -298,6 +674,7 @@ export default function CargoSea() {
         </radialGradient>
 
         {/* Horizon haze */}
+
         <linearGradient
           id="cs-haze"
           x1="0"
@@ -310,11 +687,13 @@ export default function CargoSea() {
             stopColor="#FFFFFF"
             stopOpacity="0"
           />
+
           <stop
             offset=".75"
             stopColor="#FFFFFF"
             stopOpacity=".30"
           />
+
           <stop
             offset="1"
             stopColor="#FFFFFF"
@@ -323,6 +702,7 @@ export default function CargoSea() {
         </linearGradient>
 
         {/* Sea */}
+
         <linearGradient
           id="cs-sea"
           x1="0"
@@ -334,21 +714,25 @@ export default function CargoSea() {
             offset="0"
             stopColor="#6798B5"
           />
+
           <stop
             offset=".27"
             stopColor="#376E90"
           />
+
           <stop
             offset=".64"
             stopColor="#245572"
           />
+
           <stop
             offset="1"
             stopColor="#12364F"
           />
         </linearGradient>
 
-        {/* Subtle sea reflection */}
+        {/* Sea reflection */}
+
         <linearGradient
           id="cs-reflection"
           x1="0"
@@ -361,11 +745,13 @@ export default function CargoSea() {
             stopColor="#DDEAF2"
             stopOpacity=".28"
           />
+
           <stop
             offset=".5"
             stopColor="#8EB4CA"
             stopOpacity=".10"
           />
+
           <stop
             offset="1"
             stopColor="#FFFFFF"
@@ -373,7 +759,8 @@ export default function CargoSea() {
           />
         </linearGradient>
 
-        {/* Cloud blur */}
+        {/* Clouds */}
+
         <filter
           id="cs-cloud"
           x="-30%"
@@ -381,10 +768,11 @@ export default function CargoSea() {
           width="160%"
           height="300%"
         >
-          <feGaussianBlur stdDeviation="16" />
+          <feGaussianBlur
+            stdDeviation="16"
+          />
         </filter>
 
-        {/* Small atmospheric blur */}
         <filter
           id="cs-atmosphere"
           x="-20%"
@@ -392,10 +780,13 @@ export default function CargoSea() {
           width="140%"
           height="200%"
         >
-          <feGaussianBlur stdDeviation="7" />
+          <feGaussianBlur
+            stdDeviation="7"
+          />
         </filter>
 
         {/* Ship shadow */}
+
         <filter
           id="cs-ship-shadow"
           x="-20%"
@@ -429,8 +820,12 @@ export default function CargoSea() {
         fill="url(#cs-light)"
       />
 
-      {/* Large soft cloud bands */}
+      {/* ====================================================== */}
+      {/* FAR CLOUDS                                              */}
+      {/* ====================================================== */}
+
       <g
+        ref={cloudsFarRef}
         filter="url(#cs-cloud)"
         fill="#FFFFFF"
       >
@@ -483,8 +878,12 @@ export default function CargoSea() {
         />
       </g>
 
-      {/* Lower cloud bank — deliberately soft */}
+      {/* ====================================================== */}
+      {/* NEAR CLOUDS                                             */}
+      {/* ====================================================== */}
+
       <g
+        ref={cloudsNearRef}
         filter="url(#cs-atmosphere)"
         fill="#FFFFFF"
       >
@@ -505,7 +904,8 @@ export default function CargoSea() {
         />
       </g>
 
-      {/* Slight cool cloud shadows */}
+      {/* Cool cloud shadows */}
+
       <g
         filter="url(#cs-cloud)"
         fill="#AEBFD0"
@@ -534,36 +934,39 @@ export default function CargoSea() {
       </g>
 
       {/* ====================================================== */}
-      {/* DISTANT PORT / CITY                                     */}
+      {/* DISTANT CITY                                            */}
       {/* ====================================================== */}
 
-      <path
-        d={sky[0]}
-        fill="#91ADC3"
-        opacity=".72"
-      />
+      <g ref={skylineRef}>
+        <path
+          d={scene.sky[0]}
+          fill="#91ADC3"
+          opacity=".72"
+        />
 
-      <path
-        d={sky[1]}
-        fill="#AFC4D5"
-        opacity=".65"
-      />
+        <path
+          d={scene.sky[1]}
+          fill="#AFC4D5"
+          opacity=".65"
+        />
 
-      <path
-        d={wins[0]}
-        stroke="#E6F0F7"
-        strokeWidth="1.5"
-        opacity=".55"
-      />
+        <path
+          d={scene.wins[0]}
+          stroke="#E6F0F7"
+          strokeWidth="1.5"
+          opacity=".55"
+        />
 
-      <path
-        d={wins[1]}
-        stroke="#E6F0F7"
-        strokeWidth="1.5"
-        opacity=".28"
-      />
+        <path
+          d={scene.wins[1]}
+          stroke="#E6F0F7"
+          strokeWidth="1.5"
+          opacity=".28"
+        />
+      </g>
 
       {/* Horizon haze */}
+
       <rect
         y={HZ - 8}
         width={W}
@@ -582,63 +985,80 @@ export default function CargoSea() {
         fill="url(#cs-sea)"
       />
 
-      {/* Very subtle light reflection under horizon */}
-      <path
-        d="
-          M0 340
-          C220 325 420 342 650 332
-          C860 322 1100 339 1440 328
-          L1440 390
-          C1110 375 880 384 650 374
-          C420 365 190 380 0 366Z
-        "
-        fill="url(#cs-reflection)"
-        opacity=".32"
-      />
+      {/* ====================================================== */}
+      {/* WATER PARALLAX LAYER                                    */}
+      {/* ====================================================== */}
 
-      {/* Sea waves */}
-      <g
-        strokeLinecap="round"
-        opacity=".82"
-      >
-        {waves.map(([key, d]) => {
-          const [color, strokeWidth] =
-            key.split("|");
-
-          return (
-            <path
-              key={key}
-              d={d}
-              stroke={color}
-              strokeWidth={strokeWidth}
-            />
-          );
-        })}
-      </g>
-
-      {/* Foreground darker water bands */}
-      <g
-        fill="none"
-        stroke="#0F3048"
-        strokeLinecap="round"
-        opacity=".16"
-      >
-        <path
-          d="M40 548h210M330 570h290M750 536h250M1100 570h290"
-          strokeWidth="2"
-        />
+      <g ref={waterRef}>
+        {/* Light reflection */}
 
         <path
-          d="M80 585h180M460 592h240M850 575h190M1210 590h180"
-          strokeWidth="3"
+          d="
+            M0 340
+            C220 325 420 342 650 332
+            C860 322 1100 339 1440 328
+            L1440 390
+            C1110 375 880 384 650 374
+            C420 365 190 380 0 366Z
+          "
+          fill="url(#cs-reflection)"
+          opacity=".32"
         />
+
+        {/* Generated waves */}
+
+        <g
+          strokeLinecap="round"
+          opacity=".82"
+        >
+          {scene.waves.map(
+            ([key, d]) => {
+              const [
+                color,
+                strokeWidth,
+              ] =
+                key.split("|");
+
+              return (
+                <path
+                  key={key}
+                  d={d}
+                  stroke={color}
+                  strokeWidth={
+                    strokeWidth
+                  }
+                />
+              );
+            }
+          )}
+        </g>
+
+        {/* Foreground darker water */}
+
+        <g
+          fill="none"
+          stroke="#0F3048"
+          strokeLinecap="round"
+          opacity=".16"
+        >
+          <path
+            d="M40 548h210M330 570h290M750 536h250M1100 570h290"
+            strokeWidth="2"
+          />
+
+          <path
+            d="M80 585h180M460 592h240M850 575h190M1210 590h180"
+            strokeWidth="3"
+          />
+        </g>
       </g>
 
       {/* ====================================================== */}
-      {/* DISTANT PORT CRANES                                     */}
+      {/* PORT CRANES                                             */}
       {/* ====================================================== */}
 
       <g
+        ref={cranesRef}
         stroke="#648BA8"
         strokeWidth="2.5"
         fill="none"
@@ -646,26 +1066,46 @@ export default function CargoSea() {
         strokeLinecap="square"
       >
         <path d="M1378 330V249l32-36" />
+
         <path d="M1378 249h58" />
+
         <path d="M1409 330V261" />
+
         <path d="M1428 330V270" />
       </g>
 
       {/* ====================================================== */}
-      {/* CONTAINER SHIP                                           */}
+      {/* CONTAINER SHIP                                          */}
       {/* ====================================================== */}
 
-      <g filter="url(#cs-ship-shadow)">
-        {/* Container stacks */}
-        {stacks.map(([color, d]) => (
-          <path
-            key={color}
-            d={d}
-            fill={color}
-          />
-        ))}
+      <g
+        ref={shipRef}
+        filter="url(#cs-ship-shadow)"
+        /*
+         * The ship starts far away.
+         *
+         * Scroll code modifies this transform:
+         * translate + scale.
+         */
+        transform="translate(0 42) scale(.68)"
+        opacity=".96"
+      >
+        {/* -------------------------------------------------- */}
+        {/* CONTAINERS                                          */}
+        {/* -------------------------------------------------- */}
+
+        {scene.stacks.map(
+          ([color, d]) => (
+            <path
+              key={color}
+              d={d}
+              fill={color}
+            />
+          )
+        )}
 
         {/* Container seam details */}
+
         <g
           stroke="#183C59"
           strokeWidth=".7"
@@ -676,12 +1116,17 @@ export default function CargoSea() {
           }).map((_, i) => (
             <path
               key={i}
-              d={`M${752 + i * 21} 292v-8`}
+              d={`M${
+                752 + i * 21
+              } 292v-8`}
             />
           ))}
         </g>
 
-        {/* Main bridge */}
+        {/* -------------------------------------------------- */}
+        {/* BRIDGE                                               */}
+        {/* -------------------------------------------------- */}
+
         <path
           d="M900 232h330v-14H900z"
           fill="#F1F4F6"
@@ -693,6 +1138,7 @@ export default function CargoSea() {
         />
 
         {/* Bridge windows */}
+
         <path
           d="
             M990 206
@@ -704,7 +1150,6 @@ export default function CargoSea() {
           opacity=".85"
         />
 
-        {/* Bridge window divisions */}
         <g
           stroke="#B8C9D6"
           strokeWidth="1"
@@ -715,12 +1160,18 @@ export default function CargoSea() {
           }).map((_, i) => (
             <path
               key={i}
-              d={`M${1005 + i * 20} 206v7`}
+              d={`M${
+                1005 +
+                i * 20
+              } 206v7`}
             />
           ))}
         </g>
 
-        {/* Navigation tower */}
+        {/* -------------------------------------------------- */}
+        {/* NAVIGATION TOWER                                    */}
+        {/* -------------------------------------------------- */}
+
         <rect
           x="1060"
           y="196"
@@ -741,7 +1192,6 @@ export default function CargoSea() {
           strokeWidth="2"
         />
 
-        {/* Mast light */}
         <circle
           cx="1073"
           cy="168"
@@ -749,7 +1199,10 @@ export default function CargoSea() {
           fill="#F4F8FB"
         />
 
-        {/* Foremast */}
+        {/* -------------------------------------------------- */}
+        {/* FOREMAST                                             */}
+        {/* -------------------------------------------------- */}
+
         <path
           d="M806 292V210"
           stroke="#E3E9EE"
@@ -762,7 +1215,10 @@ export default function CargoSea() {
           strokeWidth="2"
         />
 
-        {/* Main hull */}
+        {/* -------------------------------------------------- */}
+        {/* MAIN HULL                                            */}
+        {/* -------------------------------------------------- */}
+
         <path
           d="
             M740 292
@@ -776,14 +1232,16 @@ export default function CargoSea() {
           fill="#172A42"
         />
 
-        {/* Hull upper highlight */}
+        {/* Hull highlight */}
+
         <path
           d="M744 296H1346"
           stroke="#435873"
           strokeWidth="2"
         />
 
-        {/* Hull paint band */}
+        {/* Painted hull band */}
+
         <path
           d="
             M822 328
@@ -803,48 +1261,65 @@ export default function CargoSea() {
         />
 
         {/* Hull reflection */}
+
         <path
           d="
             M860 349
-            C970 355 1110 355 1290 348
+            C970 355
+            1110 355
+            1290 348
             L1260 359
-            C1090 367 960 365 880 357Z
+            C1090 367
+            960 365
+            880 357Z
           "
           fill="#081F32"
           opacity=".28"
         />
+
+        {/* -------------------------------------------------- */}
+        {/* WAKE                                                */}
+        {/* -------------------------------------------------- */}
+
+        <g
+          ref={wakeRef}
+          opacity=".55"
+          stroke="#F5FAFD"
+          strokeLinecap="round"
+          fill="none"
+        >
+          <path
+            d="
+              M850 346h110
+              M980 349h160
+              M1160 347h120
+            "
+            strokeWidth="3"
+          />
+
+          <path
+            d="
+              M820 353h80
+              M930 356h120
+              M1080 355h150
+            "
+            strokeWidth="2"
+            opacity=".65"
+          />
+
+          <path
+            d="
+              M880 363h120
+              M1030 365h130
+            "
+            strokeWidth="1.5"
+            opacity=".4"
+          />
+        </g>
       </g>
 
       {/* ====================================================== */}
-      {/* BOW WAKE                                                */}
-      {/* ====================================================== */}
-
-      <g
-        stroke="#F5FAFD"
-        strokeLinecap="round"
-        fill="none"
-      >
-        <path
-          d="M850 346h110M980 349h160M1160 347h120"
-          strokeWidth="3"
-          opacity=".92"
-        />
-
-        <path
-          d="M820 353h80M930 356h120M1080 355h150"
-          strokeWidth="2"
-          opacity=".52"
-        />
-
-        <path
-          d="M880 363h120M1030 365h130"
-          strokeWidth="1.5"
-          opacity=".32"
-        />
-      </g>
-
-      {/* ====================================================== */}
-      {/* FINAL ATMOSPHERIC VEIL                                  */}
+      {/* FINAL ATMOSPHERIC VEIL                                 */}
       {/* ====================================================== */}
 
       <rect
